@@ -40,6 +40,7 @@ class ProductTemplate extends PostTemplate implements TemplateInterface
         $groups = [];
 
         $product_types = wc_get_product_types();
+        $product_types['variation'] = 'Product Variation';
         $product_types_options = [];
         foreach ($product_types as $k => $v) {
             $product_types_options[] = [
@@ -697,6 +698,9 @@ class ProductTemplate extends PostTemplate implements TemplateInterface
                 // Get name.
                 $attribute_name = $attribute_id ? wc_attribute_taxonomy_name_by_id($attribute_id) : $name;
 
+                // allow to keep existing attributes
+                $existing_options = isset($existing_attributes[$attribute_name]) ? $existing_attributes[$attribute_name]->get_options() : [];
+
                 // Set if is a variation attribute based on existing attributes if possible so updates via CSV do not change this.
                 $is_variation = 0;
 
@@ -724,6 +728,8 @@ class ProductTemplate extends PostTemplate implements TemplateInterface
                     } else {
                         $options = array();
                     }
+
+                    $options = array_unique(array_merge($existing_options, $options));
 
                     // Check for default attributes and set "is_variation".
                     // if (isset($attribute['default']) && !empty($attribute['default']) && in_array($attribute['default'], $options, true)) {
