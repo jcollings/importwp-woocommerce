@@ -19,7 +19,7 @@ ImportWP WooCommerce Product Importer Addon adds a new Template allowing you to 
 The WooCommerce Product Importer Addon can currently only be installed by downloading from [github.com](https://github.com/jcollings/importwp-woocommerce) via the Releases tab of the repository.
 
 1. Download the latest version via the [Releases page on github](https://github.com/jcollings/importwp-woocommerce/releases).
-1. Upload ‘importwp-yoast-seo’ to the ‘/wp-content/plugins/’ directory
+1. Upload ‘importwp-woocommerce’ to the ‘/wp-content/plugins/’ directory
 1. Activate the plugin through the ‘Plugins’ menu in WordPress
 1. When creating an importer, a new template should appear on the template dropdown.
 
