@@ -25,30 +25,29 @@ class ServiceProvider extends \ImportWP\ServiceProvider
      */
     public function register_template_post_process($post_id, $data, $template)
     {
-        if ($data->getMethod() === 'INSERT') {
 
-            // check importer product categories
-            $tax = 'product_cat';
-            $imported_taxonomies = $template->get_importer_taxonomies();
-            $product_cats = isset($imported_taxonomies[$tax]) ? $imported_taxonomies[$tax] : [];
-            if (!empty($product_cats)) {
-                $default_product_cat = intval(get_option('default_product_cat'));
-                $terms = wp_get_object_terms($post_id, $tax);
+        // check importer product categories
+        $tax = 'product_cat';
+        $imported_taxonomies = $template->get_importer_taxonomies();
+        $product_cats = isset($imported_taxonomies[$tax]) ? $imported_taxonomies[$tax] : [];
+        if (!empty($product_cats)) {
+            $default_product_cat = intval(get_option('default_product_cat'));
+            $terms = wp_get_object_terms($post_id, $tax);
 
-                if (count($terms) >= count($product_cats)) {
-                    $found = false;
-                    foreach ($terms as $i => $term) {
-                        if ($term->term_id === intval($default_product_cat)) {
-                            $found = true;
-                        }
+            if (count($terms) >= count($product_cats)) {
+                $found = false;
+                foreach ($terms as $i => $term) {
+                    if ($term->term_id === intval($default_product_cat)) {
+                        $found = true;
                     }
+                }
 
-                    if ($found === true) {
-                        wp_remove_object_terms($post_id, $default_product_cat, $tax, true);
-                    }
+                if ($found === true) {
+                    wp_remove_object_terms($post_id, $default_product_cat, $tax, true);
                 }
             }
         }
+        
         return $post_id;
     }
 
