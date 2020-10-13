@@ -1001,6 +1001,16 @@ class ProductTemplate extends PostTemplate implements TemplateInterface
         // }
     }
 
+    /**
+     * Retrive a list of imported taxonomies via the Taxonomies section of the importer
+     *
+     * @return mixed
+     */
+    public function get_importer_taxonomies()
+    {
+        return $this->_taxonomies;
+    }
+
     private function get_product_id_by_sku($sku)
     {
 
