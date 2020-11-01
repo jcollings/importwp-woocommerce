@@ -25,6 +25,9 @@ class ServiceProvider extends \ImportWP\ServiceProvider
      */
     public function register_template_post_process($post_id, $data, $template)
     {
+        if (!($template instanceof ProductTemplate)) {
+            return;
+        }
 
         // check importer product categories
         $tax = 'product_cat';
@@ -47,7 +50,7 @@ class ServiceProvider extends \ImportWP\ServiceProvider
                 }
             }
         }
-        
+
         return $post_id;
     }
 
