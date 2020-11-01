@@ -4,12 +4,21 @@ namespace ImportWPAddon\WooCommerce\Importer\Template;
 
 use ImportWP\Common\Importer\Exception\MapperException;
 use ImportWP\Common\Importer\ParsedData;
-use ImportWP\Common\Importer\Template\PostTemplate;
 use ImportWP\Common\Importer\TemplateInterface;
 use ImportWP\Container;
 use ImportWP\EventHandler;
 
-class ProductTemplate extends PostTemplate implements TemplateInterface
+if (class_exists('ImportWP\Pro\Importer\Template\PostTemplate')) {
+    class IWP_Base_PostTemplate extends \ImportWP\Pro\Importer\Template\PostTemplate
+{
+    }
+} else {
+    class IWP_Base_PostTemplate extends \ImportWP\Common\Importer\Template\PostTemplate
+    {
+    }
+}
+
+class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 {
     protected $name = 'WooCommerce Products';
     protected $mapper = 'woocommerce-product';
@@ -258,11 +267,10 @@ class ProductTemplate extends PostTemplate implements TemplateInterface
             $this->register_field('File URL', 'file'),
         ], ['type' => 'repeatable']);
 
-        // Taxonomies
-        $groups[] = $this->register_taxonomy_fields();
-
-        // Attachments
-        $groups[] = $this->register_attachment_fields();
+        // remove core parent group
+        $parent_groups = parent::register();
+        array_shift($parent_groups);
+        $groups = array_merge($groups, $parent_groups);
 
         return $groups;
     }
