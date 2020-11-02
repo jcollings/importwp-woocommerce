@@ -36,17 +36,22 @@ class ProductMapper extends PostMapper implements MapperInterface
             return $product;
         }
 
-        if (isset($post['post_title']) && !empty($post['post_title'])) {
-            $product->set_name($post['post_title']);
+        $post_title = $data->getValue('post.post_title', 'post');
+        $post_content = $data->getValue('post.post_content', 'post');
+        $post_excerpt = $data->getValue('post.post_excerpt', 'post');
+        $post_status = $data->getValue('post.post_status', 'post');
+
+        if ($post_title && !empty($post_title)) {
+            $product->set_name($post_title);
         }
-        if (isset($post['post_content']) && !empty($post['post_content'])) {
-            $product->set_description($post['post_content']);
+        if ($post_content && !empty($post_content)) {
+            $product->set_description($post_content);
         }
-        if (isset($post['post_excerpt']) && !empty($post['post_excerpt'])) {
-            $product->set_short_description($post['post_excerpt']);
+        if ($post_excerpt && !empty($post_excerpt)) {
+            $product->set_short_description($post_excerpt);
         }
-        if (isset($post['post_status']) && !empty($post['post_status'])) {
-            $product->set_status($post['post_status']);
+        if ($post_status && !empty($post_status)) {
+            $product->set_status($post_status);
         }
 
         $product->save();

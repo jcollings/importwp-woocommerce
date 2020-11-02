@@ -10,7 +10,7 @@ use ImportWP\EventHandler;
 
 if (class_exists('ImportWP\Pro\Importer\Template\PostTemplate')) {
     class IWP_Base_PostTemplate extends \ImportWP\Pro\Importer\Template\PostTemplate
-{
+    {
     }
 } else {
     class IWP_Base_PostTemplate extends \ImportWP\Common\Importer\Template\PostTemplate
@@ -345,6 +345,10 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
         $wc_data = [
             // post
+            'post_title' => $data->getValue('post.post_title', 'post'),
+            'post_content' => $data->getValue('post.post_content', 'post'),
+            'post_excerpt' => $data->getValue('post.post_excerpt', 'post'),
+            'post_status' => $data->getValue('post.post_status', 'post'),
             'product_type' => $data->getValue('post.product_type', 'post'),
             '_virtual' => $data->getValue('post._virtual', 'post'),
             '_downloadable' => $data->getValue('post._virtual', 'post'),
@@ -381,27 +385,64 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
         ];
 
+        // remove disabled fields
+        $optional_fields = [
+            // post
+            'post_status' => 'post.post_status',
+            'product_type' => 'post.product_type',
+            '_virtual' => 'post._virtual',
+            '_downloadable' => 'post._downloadable',
+            '_visibility' => 'post._visibility',
+            '_product_url' => 'post._product_url',
+            '_button_text' => 'post._button_text',
+            'tax_status' => 'post.tax_status',
+            'tax_class' => 'post.tax_class',
+
+            // price
+            '_sale_price' => 'price.sale',
+            '_sale_price_dates_to' => 'price.sale',
+            '_sale_price_dates_from' => 'price.sale',
+
+            // stock
+            '_stock_status' => 'inventory.stock',
+            '_manage_stock' => 'inventory.stock',
+            '_stock' => 'inventory.stock',
+            '_backorders' => 'inventory.stock',
+            '_low_stock_amount' => 'inventory.stock',
+            '_sold_individually' => 'inventory.stock',
+
+            // shipping shipping.dimensions
+            '_weight' => 'shipping.dimensions',
+            '_length' => 'shipping.dimensions',
+            '_width' => 'shipping.dimensions',
+            '_height' => 'shipping.dimensions',
+            'shipping_class' => 'shipping.dimensions',
+
+            // advanced
+            // TODO: '' => 'advanced._parent',
+            'menu_order' => 'advanced.menu_order',
+            'comment_status' => 'advanced.comment_status',
+            '_purchase_note' => 'advanced._purchase_note',
+            '_download_limit' => 'advanced._download_limit',
+            '_download_expiry' => 'advanced._download_expiry',
+        ];
+
+        foreach ($optional_fields as $field_id => $enable_id) {
+            if (isset($wc_data[$field_id]) && !$this->importer->isEnabledField($enable_id)) {
+                unset($wc_data[$field_id]);
+            }
+        }
+
+        // check permissions for product data
+        $wc_data = $data->permission()->validate($wc_data, $data->getMethod(), 'product');
+
         foreach ($wc_data as $field => $value) {
             $raw_value = $this->format_field($field, $value);
+            $value = apply_filters('iwp/template/process_field', $value, $field, $this->importer);
             $value = apply_filters("iwp/woocommerce/product_field", $value, $raw_value, $field);
             $value = apply_filters("iwp/woocommerce/product_field/{$field}", $value, $raw_value);
             $wc_data[$field] = $value;
         }
-
-        // $product_data['ID'] = $post_id;
-
-        // $allowed_product_types = array_keys(wc_get_product_types());
-        // if (count($product_types) > 1) {
-        //     $product_types = array_filter(array_map('trim', $product_types));
-        //     foreach ($product_types as $product_type) {
-        //         if (in_array($product_type, $allowed_product_types)) {
-        //             $product_data['type'] = $product_type;
-        //             break;
-        //         }
-        //     }
-        // } else {
-        //     $product_data['type'] = $wc_data['product_type'];
-        // }
 
         $product = wc_get_product($post_id);
 
@@ -410,64 +451,133 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             /**
              * @var \WC_Product $product
              */
-            $product->set_sku($wc_data['_sku']);
+            if (isset($wc_data['_sku'])) {
+                $product->set_sku($wc_data['_sku']);
+            }
 
             // product types
-            $downloadable_set = false;
-            $virtual_set = false;
-            $product_types = explode(',', $wc_data['product_type']);
-            if (count($product_types) > 0) {
-                $product_types = array_filter(array_map('trim', $product_types));
-                if (in_array('downloadable', $product_types, true)) {
-                    $product->set_downloadable('yes');
-                    $downloadable_set = true;
-                }
-                if (in_array('virtual', $product_types, true)) {
-                    $product->set_virtual('yes');
-                    $virtual_set = true;
+            if (isset($wc_data['product_type'])) {
+                $downloadable_set = false;
+                $virtual_set = false;
+                $product_types = explode(',', $wc_data['product_type']);
+                if (count($product_types) > 0) {
+                    $product_types = array_filter(array_map('trim', $product_types));
+                    if (in_array('downloadable', $product_types, true)) {
+                        $product->set_downloadable('yes');
+                        $downloadable_set = true;
+                    }
+                    if (in_array('virtual', $product_types, true)) {
+                        $product->set_virtual('yes');
+                        $virtual_set = true;
+                    }
                 }
             }
 
             // set only if they have not been previously set by product type column
-            if (false === $downloadable_set) {
+            if (isset($wc_data['_downloadable']) && false === $downloadable_set) {
                 $product->set_downloadable($wc_data['_downloadable']);
             }
-            if (false === $virtual_set) {
+            if (isset($wc_data['_virtual']) && false === $virtual_set) {
                 $product->set_virtual($wc_data['_virtual']);
             }
 
+            // name
+            if (isset($wc_data['post_title'])) {
+                $product->set_name($wc_data['post_title']);
+            }
+
+            if (isset($wc_data['post_excerpt'])) {
+                $product->set_short_description($wc_data['post_excerpt']);
+            }
+
+            if (isset($wc_data['post_content'])) {
+                $product->set_description($wc_data['post_content']);
+            }
+
+            if (isset($wc_data['post_status'])) {
+                $product->set_status($wc_data['post_status']);
+            }
+
+            if (isset($wc_data['menu_order'])) {
+                $product->set_menu_order($wc_data['menu_order']);
+            }
+
+            if (isset($wc_data['comment_status'])) {
+                $product->set_reviews_allowed($wc_data['comment_status']);
+            }
+
             // set product values via WC_Product Methods
-            $product->set_regular_price($wc_data['_regular_price']);
-            $product->set_sale_price($wc_data['_sale_price']);
-            $product->set_date_on_sale_from($wc_data['_sale_price_dates_from']);
-            $product->set_date_on_sale_to($wc_data['_sale_price_dates_to']);
-            $product->set_catalog_visibility($wc_data['_visibility']);
-            $product->set_purchase_note($wc_data['_purchase_note']);
-            $product->set_tax_class($wc_data['tax_class']);
-            $product->set_tax_status($wc_data['tax_status']);
+            if (isset($wc_data['_regular_price'])) {
+                $product->set_regular_price($wc_data['_regular_price']);
+            }
+            if (isset($wc_data['_sale_price'])) {
+                $product->set_sale_price($wc_data['_sale_price']);
+            }
+            if (isset($wc_data['_sale_price_dates_from'])) {
+                $product->set_date_on_sale_from($wc_data['_sale_price_dates_from']);
+            }
+            if (isset($wc_data['_sale_price_dates_to'])) {
+                $product->set_date_on_sale_to($wc_data['_sale_price_dates_to']);
+            }
+            if (isset($wc_data['_visibility'])) {
+                $product->set_catalog_visibility($wc_data['_visibility']);
+            }
+            if (isset($wc_data['_purchase_note'])) {
+                $product->set_purchase_note($wc_data['_purchase_note']);
+            }
+            if (isset($wc_data['tax_class'])) {
+                $product->set_tax_class($wc_data['tax_class']);
+            }
+            if (isset($wc_data['tax_status'])) {
+                $product->set_tax_status($wc_data['tax_status']);
+            }
 
             // Dimensions
-            $product->set_weight($wc_data['_weight']);
-            $product->set_length($wc_data['_length']);
-            $product->set_width($wc_data['_width']);
-            $product->set_height($wc_data['_height']);
+            if (isset($wc_data['_weight'])) {
+                $product->set_weight($wc_data['_weight']);
+            }
+            if (isset($wc_data['_length'])) {
+                $product->set_length($wc_data['_length']);
+            }
+            if (isset($wc_data['_width'])) {
+                $product->set_width($wc_data['_width']);
+            }
+            if (isset($wc_data['_height'])) {
+                $product->set_height($wc_data['_height']);
+            }
 
             if ($product->is_type('external')) {
 
                 /**
                  * @var WC_Product_External $product
                  */
-                $product->set_button_text($wc_data['_button_text']);
-                $product->set_product_url($wc_data['_product_url']);
+                if (isset($wc_data['_button_text'])) {
+                    $product->set_button_text($wc_data['_button_text']);
+                }
+                if (isset($wc_data['_product_url'])) {
+                    $product->set_product_url($wc_data['_product_url']);
+                }
             } else {
 
                 // Stock
-                $product->set_manage_stock($wc_data['_manage_stock']);
-                $product->set_stock_status($wc_data['_stock_status']);
-                $product->set_stock_quantity($wc_data['_stock']);
-                $product->set_backorders($wc_data['_backorders']);
-                $product->set_low_stock_amount($wc_data['_low_stock_amount']);
-                $product->set_sold_individually($wc_data['_sold_individually']);
+                if (isset($wc_data['_manage_stock'])) {
+                    $product->set_manage_stock($wc_data['_manage_stock']);
+                }
+                if (isset($wc_data['_stock_status'])) {
+                    $product->set_stock_status($wc_data['_stock_status']);
+                }
+                if (isset($wc_data['_stock'])) {
+                    $product->set_stock_quantity($wc_data['_stock']);
+                }
+                if (isset($wc_data['_backorders'])) {
+                    $product->set_backorders($wc_data['_backorders']);
+                }
+                if (isset($wc_data['_low_stock_amount'])) {
+                    $product->set_low_stock_amount($wc_data['_low_stock_amount']);
+                }
+                if (isset($wc_data['_sold_individually'])) {
+                    $product->set_sold_individually($wc_data['_sold_individually']);
+                }
             }
 
             // // downloadable
@@ -544,8 +654,12 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
     private function set_downloads(&$product, $data, $wc_data)
     {
 
-        $product->set_download_limit($wc_data['_download_limit']);
-        $product->set_download_expiry($wc_data['_download_expiry']);
+        if (isset($wc_data['_download_limit'])) {
+            $product->set_download_limit($wc_data['_download_limit']);
+        }
+        if (isset($wc_data['_download_expiry'])) {
+            $product->set_download_expiry($wc_data['_download_expiry']);
+        }
 
         $group = 'downloads';
         $raw_downloads = $data->getData($group);
@@ -553,6 +667,18 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
         $downloads = [];
         for ($i = 0; $i < $record_count; $i++) {
+
+            $permission_key = 'downloads.' . $i; //downloads.0
+
+            if ($data->permission()) {
+                $allowed = $data->permission()->validate([$permission_key => ''], $data->getMethod(), $group);
+                $is_allowed = isset($allowed[$permission_key]) ? true : false;
+
+                if (!$is_allowed) {
+                    continue;
+                }
+            }
+
             $prefix = $group . '.' . $i . '.';
             $row = [
                 'name' => $raw_downloads[$prefix . 'name'],
@@ -605,11 +731,23 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             $parent_attributes = $this->get_variation_parent_attributes($raw_attributes, $parent);
 
             for ($i = 0; $i < $record_count; $i++) {
+
                 $prefix = 'attributes.' . $i . '.';
                 $name = $raw_attributes[$prefix . 'name'];
                 $terms = $raw_attributes[$prefix . 'terms'];
                 $global = $raw_attributes[$prefix . 'global'];
                 $visible = $raw_attributes[$prefix . 'visible'];
+
+                $permission_key = 'attributes.' . $name; //attributes.$name
+
+                if ($data->permission()) {
+                    $allowed = $data->permission()->validate([$permission_key => ''], $data->getMethod(), 'attributes');
+                    $is_allowed = isset($allowed[$permission_key]) ? true : false;
+
+                    if (!$is_allowed) {
+                        continue;
+                    }
+                }
 
                 $attribute_id = 0;
 
@@ -658,14 +796,17 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
     {
 
         //
-        $product->set_upsell_ids($this->set_related_products($data, 'upsell'));
-        $product->set_cross_sell_ids($this->set_related_products($data, 'crosssell'));
-        $product->set_props([
-            'children' => $this->set_related_products($data, 'grouped')
-        ]);
-        // update_post_meta($product->get_id(), 'children', );
-
-        $this->process_related_products($data);
+        if ($this->importer->isEnabledField('linked-products.upsell')) {
+            $product->set_upsell_ids($this->set_related_products($data, 'upsell'));
+        }
+        if ($this->importer->isEnabledField('linked-products.crosssell')) {
+            $product->set_cross_sell_ids($this->set_related_products($data, 'crosssell'));
+        }
+        if ($this->importer->isEnabledField('linked-products.grouped')) {
+            $product->set_props([
+                'children' => $this->set_related_products($data, 'grouped')
+            ]);
+        }
 
         $raw_attributes = $data->getData('attributes');
         $record_count = intval($raw_attributes['attributes._index']);
