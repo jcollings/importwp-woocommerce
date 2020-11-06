@@ -393,8 +393,8 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             '_virtual' => 'post._virtual',
             '_downloadable' => 'post._downloadable',
             '_visibility' => 'post._visibility',
-            '_product_url' => 'post._product_url',
-            '_button_text' => 'post._button_text',
+            '_product_url' => 'post.external',
+            '_button_text' => 'post.external',
             'tax_status' => 'post.tax_status',
             'tax_class' => 'post.tax_class',
 
