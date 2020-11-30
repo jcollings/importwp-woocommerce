@@ -76,6 +76,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             $this->register_core_field('Product Name', 'post_title'),
             $this->register_core_field('Description', 'post_content'),
             $this->register_core_field('Short Description', 'post_excerpt'),
+            $this->register_field('Slug', 'post_name', [
+                'tooltip' => __('The slug is the user friendly and URL valid name of the post.', 'importwp')
+            ]),
             $this->register_field('Product Type', 'product_type', [
                 'options' => $product_types_options
             ]),
@@ -346,6 +349,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         $wc_data = [
             // post
             'post_title' => $data->getValue('post.post_title', 'post'),
+            'post_name' => $data->getValue('post.post_name', 'post'),
             'post_content' => $data->getValue('post.post_content', 'post'),
             'post_excerpt' => $data->getValue('post.post_excerpt', 'post'),
             'post_status' => $data->getValue('post.post_status', 'post'),
@@ -389,6 +393,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         $optional_fields = [
             // post
             'post_status' => 'post.post_status',
+            'post_name' => 'post.post_name',
             'product_type' => 'post.product_type',
             '_virtual' => 'post._virtual',
             '_downloadable' => 'post._downloadable',
@@ -484,6 +489,10 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             // name
             if (isset($wc_data['post_title'])) {
                 $product->set_name($wc_data['post_title']);
+            }
+
+            if (isset($wc_data['post_name'])) {
+                $product->set_slug($wc_data['post_name']);
             }
 
             if (isset($wc_data['post_excerpt'])) {
