@@ -37,6 +37,7 @@ class ProductMapper extends PostMapper implements MapperInterface
         }
 
         $post_title = $data->getValue('post.post_title', 'post');
+        $post_name = $data->getValue('post.post_name', 'post');
         $post_content = $data->getValue('post.post_content', 'post');
         $post_excerpt = $data->getValue('post.post_excerpt', 'post');
         $post_status = $data->getValue('post.post_status', 'post');
@@ -52,6 +53,9 @@ class ProductMapper extends PostMapper implements MapperInterface
         }
         if ($post_status && !empty($post_status)) {
             $product->set_status($post_status);
+        }
+        if ($post_name && !empty($post_name)) {
+            $product->set_slug($post_name);
         }
 
         $product->save();
