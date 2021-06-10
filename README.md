@@ -1,6 +1,6 @@
 # WooCommerce Product Importer
 
-**Version: 2.0.6**
+**Version: 2.0.7**
 
 ![WooCommerce Product Importer](./assets/iwp-addon-woocommerce.png)
 
@@ -23,6 +23,17 @@ Grouped products are imported by setting the Product Type to grouped, setting th
 ### Import WooCommerce Variable Products and Product Variations
 
 Importing Variable Products and their product variations can be done by first importing the parent variable product with all the product attributes and attribute terms needed to create the relationships with its product variations. Next With the variable products created importing the product variations need to be linked to the parent variable product, also setting there unique product attributes that create the variation.
+
+### Permissions
+
+| Section             | Field key             |
+| ------------------- | --------------------- |
+| Product Gallery     | product_gallery.\*    |
+| Product Downloads   | product_downloads.\*  |
+| Product Attributes  | product_attributes.\* |
+| Product Upsells     | product_upsell        |
+| Product Cross-sells | product_crosssell     |
+| Product Grouped     | product_grouped       |
 
 ## Installation
 

@@ -625,6 +625,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
      */
     public function process_product_gallery(&$product, $data)
     {
+
         /**
          * @var Filesystem $filesystem
          */
@@ -640,8 +641,10 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
          */
         $attachment = Container::getInstance()->get('attachment');
 
-        $image_ids = $this->process_attachments($product->get_id(), $data, $filesystem, $ftp, $attachment, 'product_gallery');
-        $product->set_gallery_image_ids($image_ids);
+        $image_ids = $this->process_attachments($product->get_id(), $data, $filesystem, $ftp, $attachment, $group);
+        if ($image_ids !== false) {
+            $product->set_gallery_image_ids($image_ids);
+        }
     }
 
     private function format_field($field, $value)
