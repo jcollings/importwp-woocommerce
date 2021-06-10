@@ -23,6 +23,13 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
     protected $name = 'WooCommerce Products';
     protected $mapper = 'woocommerce-product';
 
+    /**
+     * List of field names that have been modified
+     *
+     * @var array
+     */
+    private $_fields = [];
+
     public function __construct(EventHandler $event_handler)
     {
         parent::__construct($event_handler);
@@ -344,6 +351,8 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
      */
     public function post_process($post_id, ParsedData $data)
     {
+        $this->clear_field_log();
+
         parent::post_process($post_id, $data);
 
         $wc_data = [
@@ -447,6 +456,8 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             $value = apply_filters("iwp/woocommerce/product_field", $value, $raw_value, $field);
             $value = apply_filters("iwp/woocommerce/product_field/{$field}", $value, $raw_value);
             $wc_data[$field] = $value;
+
+            $this->log_field($field);
         }
 
         $product = wc_get_product($post_id);
@@ -673,17 +684,19 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         $group = 'downloads';
         $raw_downloads = $data->getData($group);
         $record_count = intval($raw_downloads[$group . '._index']);
+        $skipped = 0;
 
         $downloads = [];
         for ($i = 0; $i < $record_count; $i++) {
 
-            $permission_key = 'downloads.' . $i; //downloads.0
+            $permission_key = 'product_downloads.' . $i; //downloads.0
 
             if ($data->permission()) {
                 $allowed = $data->permission()->validate([$permission_key => ''], $data->getMethod(), $group);
                 $is_allowed = isset($allowed[$permission_key]) ? true : false;
 
                 if (!$is_allowed) {
+                    $skipped++;
                     continue;
                 }
             }
@@ -702,7 +715,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             $downloads[] = $row;
         }
 
-        $product->set_downloads($downloads);
+        if ($record_count > $skipped) {
+            $product->set_downloads($downloads);
+        }
     }
 
     public function set_variation_data(&$variation, ParsedData $data)
@@ -735,6 +750,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         $record_count = intval($raw_attributes['attributes._index']);
 
         $attributes = array();
+        $skipped = 0;
 
         if ($record_count > 0) {
             $parent_attributes = $this->get_variation_parent_attributes($raw_attributes, $parent);
@@ -747,13 +763,14 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $global = $raw_attributes[$prefix . 'global'];
                 $visible = $raw_attributes[$prefix . 'visible'];
 
-                $permission_key = 'attributes.' . $name; //attributes.$name
+                $permission_key = 'product_attributes.' . $i; //attributes.$name
 
                 if ($data->permission()) {
                     $allowed = $data->permission()->validate([$permission_key => ''], $data->getMethod(), 'attributes');
                     $is_allowed = isset($allowed[$permission_key]) ? true : false;
 
                     if (!$is_allowed) {
+                        $skipped++;
                         continue;
                     }
                 }
@@ -792,7 +809,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             }
         }
 
-        $variation->set_attributes($attributes);
+        if ($record_count > $skipped) {
+            $variation->set_attributes($attributes);
+        }
     }
 
     /**
@@ -804,23 +823,55 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
     public function set_product_data(&$product, $data)
     {
 
-        //
         if ($this->importer->isEnabledField('linked-products.upsell')) {
-            $product->set_upsell_ids($this->set_related_products($data, 'upsell'));
+
+            $is_allowed = true;
+            if ($data->permission()) {
+                $permission_key = 'product_upsell';
+                $allowed = $data->permission()->validate([$permission_key => ''], $data->getMethod(), 'linked-products');
+                $is_allowed = isset($allowed[$permission_key]) ? true : false;
+            }
+
+            if ($is_allowed) {
+                $product->set_upsell_ids($this->set_related_products($data, 'upsell'));
+            }
         }
+
         if ($this->importer->isEnabledField('linked-products.crosssell')) {
-            $product->set_cross_sell_ids($this->set_related_products($data, 'crosssell'));
+
+            $is_allowed = true;
+            if ($data->permission()) {
+                $permission_key = 'product_crosssell';
+                $allowed = $data->permission()->validate([$permission_key => ''], $data->getMethod(), 'linked-products');
+                $is_allowed = isset($allowed[$permission_key]) ? true : false;
+            }
+
+            if ($is_allowed) {
+                $product->set_cross_sell_ids($this->set_related_products($data, 'crosssell'));
+            }
         }
+
         if ($this->importer->isEnabledField('linked-products.grouped')) {
-            $product->set_props([
-                'children' => $this->set_related_products($data, 'grouped')
-            ]);
+
+            $is_allowed = true;
+            if ($data->permission()) {
+                $permission_key = 'product_grouped';
+                $allowed = $data->permission()->validate([$permission_key => ''], $data->getMethod(), 'linked-products');
+                $is_allowed = isset($allowed[$permission_key]) ? true : false;
+            }
+
+            if ($is_allowed) {
+                $product->set_props([
+                    'children' => $this->set_related_products($data, 'grouped')
+                ]);
+            }
         }
 
         $raw_attributes = $data->getData('attributes');
         $record_count = intval($raw_attributes['attributes._index']);
 
         $attributes          = [];
+        $skipped = 0;
 
         if ($record_count > 0) {
 
@@ -834,6 +885,17 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $terms = $raw_attributes[$prefix . 'terms'];
                 $global = $raw_attributes[$prefix . 'global'];
                 $visible = $raw_attributes[$prefix . 'visible'];
+
+                if ($data->permission()) {
+                    $permission_key = 'product_attributes.' . $i;
+                    $allowed = $data->permission()->validate([$permission_key => ''], $data->getMethod(), 'attributes');
+                    $is_allowed = isset($allowed[$permission_key]) ? true : false;
+
+                    if (!$is_allowed) {
+                        $skipped++;
+                        continue;
+                    }
+                }
 
                 if (empty($name)) {
                     continue;
@@ -931,7 +993,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             }
         }
 
-        $product->set_attributes($attributes);
+        if ($record_count > $skipped) {
+            $product->set_attributes($attributes);
+        }
 
         // Set variable default attributes.
         if ($product->is_type('variable')) {
@@ -1191,5 +1255,43 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         }
 
         return false;
+    }
+
+    private function clear_field_log()
+    {
+        $this->_fields = [];
+    }
+
+    private function log_field($field)
+    {
+        $ignore_list = [
+            'post_title',
+            'post_name',
+            'post_content',
+            'post_excerpt',
+            'post_status',
+            '_sku' // sku is moved into default group
+        ];
+
+        if (!in_array($field, $ignore_list)) {
+            $this->_fields[] = $field;
+        }
+    }
+
+    /**
+     * @param string $message
+     * @param int $id
+     * @param ParsedData $data
+     * @return $string
+     */
+    public function display_record_info($message, $id, $data)
+    {
+        $output = parent::display_record_info($message, $id, $data);
+
+        if (!empty($this->_fields)) {
+            $output .= ' (' . implode(', ', $this->_fields) . ')';
+        }
+
+        return $output;
     }
 }

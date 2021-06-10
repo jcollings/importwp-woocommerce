@@ -36,26 +36,41 @@ class ProductMapper extends PostMapper implements MapperInterface
             return $product;
         }
 
-        $post_title = $data->getValue('post.post_title', 'post');
-        $post_name = $data->getValue('post.post_name', 'post');
-        $post_content = $data->getValue('post.post_content', 'post');
-        $post_excerpt = $data->getValue('post.post_excerpt', 'post');
-        $post_status = $data->getValue('post.post_status', 'post');
+        $wc_data_keys = [
+            'post_title',
+            'post_name',
+            'post_content',
+            'post_excerpt',
+            'post_status'
+        ];
 
-        if ($post_title && !empty($post_title)) {
-            $product->set_name($post_title);
+        $wc_data = [];
+        foreach ($wc_data_keys as $key) {
+            $wc_data[$key] = $data->getValue('post.' . $key, 'post');
         }
-        if ($post_content && !empty($post_content)) {
-            $product->set_description($post_content);
+
+        if ($data->permission()) {
+            $wc_data = $data->permission()->validate($wc_data, $data->getMethod(), 'product');
         }
-        if ($post_excerpt && !empty($post_excerpt)) {
-            $product->set_short_description($post_excerpt);
+
+        if (!isset($wc_data['post_title'])) {
+            return new \WP_Error('IWP_WC_01', 'Unable to insert product (product title is required).');
         }
-        if ($post_status && !empty($post_status)) {
-            $product->set_status($post_status);
+
+        if (isset($wc_data['post_title']) && !empty($wc_data['post_title'])) {
+            $product->set_name($wc_data['post_title']);
         }
-        if ($post_name && !empty($post_name)) {
-            $product->set_slug($post_name);
+        if (isset($wc_data['post_content']) && !empty($wc_data['post_content'])) {
+            $product->set_description($wc_data['post_content']);
+        }
+        if (isset($wc_data['post_excerpt']) && !empty($wc_data['post_excerpt'])) {
+            $product->set_short_description($wc_data['post_excerpt']);
+        }
+        if (isset($wc_data['post_status']) && !empty($wc_data['post_status'])) {
+            $product->set_status($wc_data['post_status']);
+        }
+        if (isset($wc_data['post_name']) && !empty($wc_data['post_name'])) {
+            $product->set_slug($wc_data['post_name']);
         }
 
         $product->save();
