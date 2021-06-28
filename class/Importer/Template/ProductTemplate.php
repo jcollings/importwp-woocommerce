@@ -641,7 +641,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
          */
         $attachment = Container::getInstance()->get('attachment');
 
-        $image_ids = $this->process_attachments($product->get_id(), $data, $filesystem, $ftp, $attachment, $group);
+        $image_ids = $this->process_attachments($product->get_id(), $data, $filesystem, $ftp, $attachment, 'product_gallery');
         if ($image_ids !== false) {
             $product->set_gallery_image_ids($image_ids);
         }
