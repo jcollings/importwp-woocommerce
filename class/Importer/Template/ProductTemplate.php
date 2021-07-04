@@ -231,6 +231,11 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             $this->register_field('Is Visible?', 'visible', [
                 'options' => $yes_no,
                 'default' => 'no'
+            ]),
+            $this->register_field('Append terms?', 'append', [
+                'options' => $yes_no,
+                'default' => 'no',
+                'tooltip' => __('Clear existing product attribute terms, or append new attribute terms.', 'importwp')
             ])
         ], ['type' => 'repeatable']);
         $groups[] = $this->register_group('Advanced', 'advanced', [
@@ -888,6 +893,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $terms = $raw_attributes[$prefix . 'terms'];
                 $global = $raw_attributes[$prefix . 'global'];
                 $visible = $raw_attributes[$prefix . 'visible'];
+                $append = $raw_attributes[$prefix . 'append'];
 
                 if ($data->permission()) {
                     $permission_key = 'product_attributes.' . $i;
@@ -923,6 +929,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
                 // allow to keep existing attributes
                 $existing_options = isset($existing_attributes[$attribute_name]) ? $existing_attributes[$attribute_name]->get_options() : [];
+                if ($append == 'no') {
+                    $existing_options = [];
+                }
 
                 // Set if is a variation attribute based on existing attributes if possible so updates via CSV do not change this.
                 $is_variation = 0;
