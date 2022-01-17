@@ -5,7 +5,7 @@
  * Plugin URI: https://www.importwp.com
  * Description: Allow ImportWP to import WooCommerce Products.
  * Author: James Collings <james@jclabs.co.uk>
- * Version: 2.0.10 
+ * Version: 2.0.11 
  * Author URI: https://www.importwp.com
  * Network: True
  */

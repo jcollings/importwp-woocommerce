@@ -272,6 +272,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             ]),
             $this->register_field('Download Limit', '_download_limit'),
             $this->register_field('Download Expiry', '_download_expiry'),
+            $this->register_field('Date', 'post_date', [
+                'tooltip' => __('The date of the post , enter in the format "YYYY-MM-DD HH:ii:ss"', 'importwp')
+            ]),
         ]);
 
         $groups[] = $this->register_attachment_fields('Product Gallery', 'product_gallery');
@@ -400,6 +403,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             '_purchase_note' => $data->getValue('advanced._purchase_note', 'advanced'),
             '_download_limit' => $data->getValue('advanced._download_limit', 'advanced'),
             '_download_expiry' => $data->getValue('advanced._download_expiry', 'advanced'),
+            'post_date' => $data->getValue('advanced.post_date', 'advanced'),
 
         ];
 
@@ -444,6 +448,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             '_purchase_note' => 'advanced._purchase_note',
             '_download_limit' => 'advanced._download_limit',
             '_download_expiry' => 'advanced._download_expiry',
+            'post_date' => 'advanced.post_date',
         ];
 
         foreach ($optional_fields as $field_id => $enable_id) {
@@ -529,6 +534,10 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
             if (isset($wc_data['comment_status'])) {
                 $product->set_reviews_allowed($wc_data['comment_status']);
+            }
+
+            if (isset($wc_data['post_date'])) {
+                $product->set_date_created($wc_data['post_date']);
             }
 
             // set product values via WC_Product Methods
