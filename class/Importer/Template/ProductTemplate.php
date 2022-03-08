@@ -135,7 +135,10 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     'options' => $tax_classes_options,
                     'default' => ''
                 ]),
-            ])
+            ]),
+            $this->register_field('Product ID', 'ID', [
+                'tooltip' => __('Product ID field is only used as a reference and can not be inserted or updated.', 'importwp'),
+            ]),
         ]);
 
         $groups[] = $this->register_group('Pricing', 'price', [

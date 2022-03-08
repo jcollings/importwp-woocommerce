@@ -1,16 +1,16 @@
 # WooCommerce Product Importer
 
-**Version: 2.0.11**
+**Version: 2.0.12**
 
 ![WooCommerce Product Importer](./assets/iwp-addon-woocommerce.png)
 
 ## Description
 
-ImportWP WooCommerce Product Importer Addon adds a new Template allowing you to import WooCommerce Variable, Simple, Grouped and External Products. Combine this with the power of ImportWP PRO allowing you to import custom fields and many other features.
+Import WP WooCommerce Product Importer Addon adds a new Template allowing you to import WooCommerce Variable, Simple, Grouped and External Products. Combine this with the power of Import WP PRO allowing you to import custom fields and many other features.
 
 ### Import WooCommerce Simple Products
 
-ImportWP WooCommerce Product Importer gives you control over what fields are imported when importing Simple Products. Import General settings allowing you to import the price, promotional/sale price and any tax settings. Import shipping settings such as product dimensions and shipping class. Import Linked products such as Upsells and Cross-sells products. Import Product Attributes using Global or local attributes from existing or new attribute terms. Import attachments such as Feature Image and Product Gallery Images. Import Taxonomies such as Product Categories, Tags and any custom taxonomies. Import custom fields declared by your theme or plugins.
+Import WP WooCommerce Product Importer gives you control over what fields are imported when importing Simple Products. Import General settings allowing you to import the price, promotional/sale price and any tax settings. Import shipping settings such as product dimensions and shipping class. Import Linked products such as Upsells and Cross-sells products. Import Product Attributes using Global or local attributes from existing or new attribute terms. Import attachments such as Feature Image and Product Gallery Images. Import Taxonomies such as Product Categories, Tags and any custom taxonomies. Import custom fields declared by your theme or plugins.
 
 ### Import WooCommerce External Products
 

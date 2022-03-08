@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Plugin Name: ImportWP - WooCommerce Importer Addon
+ * Plugin Name: Import WP - WooCommerce Importer Addon
  * Plugin URI: https://www.importwp.com
- * Description: Allow ImportWP to import WooCommerce Products.
+ * Description: Allow Import WP to import WooCommerce Products.
  * Author: James Collings <james@jclabs.co.uk>
- * Version: 2.0.11 
+ * Version: 2.0.12 
  * Author URI: https://www.importwp.com
  * Network: True
  */
@@ -46,6 +46,6 @@ add_action('plugins_loaded', 'iwp_woocommerce_setup', 9);
 function iwp_woocommerce_notice()
 {
     echo '<div class="error">';
-    echo '<p><strong>ImportWP - WooCommerce Importer Addon</strong> requires that you have <strong>ImportWP v2.2.1 or newer</strong>, and <strong>WooCommerce</strong> installed.</p>';
+    echo '<p><strong>Import WP - WooCommerce Importer Addon</strong> requires that you have <strong>Import WP v2.2.1 or newer</strong>, and <strong>WooCommerce</strong> installed.</p>';
     echo '</div>';
 }
