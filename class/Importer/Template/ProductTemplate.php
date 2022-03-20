@@ -473,7 +473,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             $this->log_field($field);
         }
 
-        $product = wc_get_product($post_id);
+        $product = $this->get_product_object($post_id, $wc_data);
 
         try {
 
@@ -633,6 +633,45 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         } catch (\Exception $e) {
             throw new MapperException($e->getMessage());
         }
+    }
+
+    function get_product_object($post_id, $wc_data)
+    {
+        $found_type = false;
+
+        if (isset($wc_data['product_type'])) {
+
+            $allowed_types   = array_keys(wc_get_product_types());
+            $allowed_types[] = 'variation';
+            $product_types = explode(',', $wc_data['product_type']);
+
+            foreach ($allowed_types as $allowed_type) {
+                if (in_array($allowed_type, $product_types)) {
+                    $found_type = $allowed_type;
+                }
+            }
+        }
+
+        if ($found_type) {
+
+            $classname = \WC_Product_Factory::get_classname_from_product_type($found_type);
+            if (!class_exists($classname)) {
+                $classname = 'WC_Product_Simple';
+            }
+
+            try {
+                $product = new $classname($post_id);
+            } catch (\Exception $e) {
+                throw new MapperException($e->getMessage());
+            }
+        } else {
+            $product = wc_get_product($post_id);
+        }
+        if (!$product) {
+            throw new MapperException("Error loading product");
+        }
+
+        return $product;
     }
 
     /**
