@@ -136,6 +136,20 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     'default' => ''
                 ]),
             ]),
+            $this->register_group('Author Settings', '_author', [
+                $this->register_field('Author', 'post_author', [
+                    'tooltip' => __('The user of who added this post', 'importwp')
+                ]),
+                $this->register_field('Author Field Type', '_author_type', [
+                    'default' => 'id',
+                    'options' => [
+                        ['value' => 'id', 'label' => 'ID'],
+                        ['value' => 'login', 'label' => 'Login'],
+                        ['value' => 'email', 'label' => 'Email'],
+                    ],
+                    'tooltip' => __('Select how the author field should be handled', 'importwp')
+                ])
+            ]),
             $this->register_field('Product ID', 'ID', [
                 'tooltip' => __('Product ID field is only used as a reference and can not be inserted or updated.', 'importwp'),
             ]),
@@ -313,6 +327,35 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
         $post_parent_value = $data->getValue('advanced._parent.parent', 'advanced');
 
+        if ($this->importer->isEnabledField('post._author')) {
+            $post_author = $data->getValue('post._author.post_author', 'post');
+            $post_author_type = $data->getValue('post._author._author_type', 'post');
+
+            $user_id = 0;
+
+            if ($post_author_type === 'id') {
+
+                $user = get_user_by('ID', $post_author);
+                if ($user) {
+                    $user_id = intval($user->ID);
+                }
+            } elseif ($post_author_type === 'login') {
+
+                $user = get_user_by('login', $post_author);
+                if ($user) {
+                    $user_id = intval($user->ID);
+                }
+            } elseif ($post_author_type === 'email') {
+
+                $user = get_user_by('email', $post_author);
+                if ($user) {
+                    $user_id = intval($user->ID);
+                }
+            }
+
+            $data->add(['post_author' => $user_id > 0 ? $user_id : ''], 'post');
+        }
+
         if ($this->importer->isEnabledField('advanced._parent') && isset($post_parent_value)) {
 
             $parent_id = 0;
@@ -381,6 +424,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             '_button_text' => $data->getValue('post.external._button_text', 'post'),
             'tax_status' => $data->getValue('post.tax.tax_status', 'post'),
             'tax_class' => $data->getValue('post.tax.tax_class', 'post'),
+            'post_author' => $data->getValue('post_author', 'post'),
 
             // Price
             '_regular_price' => $data->getValue('price._regular_price', 'price'),
@@ -615,6 +659,10 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 if (isset($wc_data['_sold_individually'])) {
                     $product->set_sold_individually($wc_data['_sold_individually']);
                 }
+            }
+
+            if (isset($wc_data['post_author'])) {
+                $product->set_props(['post_author' => $wc_data['post_author']]);
             }
 
             // // downloadable
