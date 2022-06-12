@@ -819,6 +819,11 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $row['download_id'] = $id;
             }
 
+            // skip empty rows
+            if (empty($row['file'])) {
+                continue;
+            }
+
             $downloads[] = $row;
         }
 
