@@ -6,8 +6,8 @@ use ImportWPAddon\WooCommerce\Importer\Template\ProductTemplate;
 
 add_action('iwp/register_events', function ($event_handler) {
     $event_handler->listen('templates.register', 'iwp_woocommerce_register_templates');
-    $event_handler->listen('mappers.register', ' iwp_woocommerce_register_mappers');
-    $event_handler->listen('template.post_process', ' iwp_woocommerce_register_template_post_process');
+    $event_handler->listen('mappers.register', 'iwp_woocommerce_register_mappers');
+    $event_handler->listen('template.post_process', 'iwp_woocommerce_register_template_post_process');
 });
 
 /**
