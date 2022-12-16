@@ -4,6 +4,8 @@ use ImportWP\Common\Importer\ParsedData;
 use ImportWPAddon\WooCommerce\Importer\Mapper\ProductMapper;
 use ImportWPAddon\WooCommerce\Importer\Template\ProductTemplate;
 
+// TODO: Try disabling term recount to speed up import: 'woocommerce_product_recount_terms'
+
 add_action('iwp/register_events', function ($event_handler) {
     $event_handler->listen('templates.register', 'iwp_woocommerce_register_templates');
     $event_handler->listen('mappers.register', 'iwp_woocommerce_register_mappers');

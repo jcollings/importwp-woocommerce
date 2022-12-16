@@ -253,7 +253,11 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 'options' => $yes_no,
                 'default' => 'no',
                 'tooltip' => __('Clear existing product attribute terms, or append new attribute terms.', 'importwp')
-            ])
+            ]),
+            $this->register_field('Used for variations?', 'variation', [
+                'options' => $yes_no,
+                'default' => ''
+            ]),
         ], ['type' => 'repeatable']);
         $groups[] = $this->register_group('Advanced', 'advanced', [
             $this->register_group('Parent Settings', '_parent', [
@@ -998,6 +1002,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $global = $raw_attributes[$prefix . 'global'];
                 $visible = $raw_attributes[$prefix . 'visible'];
                 $append = $raw_attributes[$prefix . 'append'];
+                $use_variation = isset($raw_attributes[$prefix . 'variation']) ? $raw_attributes[$prefix . 'variation'] : '';
 
                 if ($data->permission()) {
                     $permission_key = 'product_attributes.' . $i;
@@ -1040,7 +1045,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 // Set if is a variation attribute based on existing attributes if possible so updates via CSV do not change this.
                 $is_variation = 0;
 
-                if ($existing_attributes) {
+                if ($use_variation !== 'no' && $existing_attributes) {
                     foreach ($existing_attributes as $existing_attribute) {
                         if ($existing_attribute->get_name() === $attribute_name) {
                             $is_variation = $existing_attribute->get_variation();
@@ -1141,6 +1146,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             $terms = $raw_attributes[$prefix . 'terms'];
             $global = $raw_attributes[$prefix . 'global'];
             $visible = $raw_attributes[$prefix . 'visible'];
+            $use_variation = isset($raw_attributes[$prefix . 'variation']) ? $raw_attributes[$prefix . 'variation'] : '';
 
             $attribute_id = 0;
 
@@ -1156,7 +1162,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             }
 
             // Check if attribute handle variations.
-            if (isset($parent_attributes[$attribute_name]) && !$parent_attributes[$attribute_name]->get_variation()) {
+            if (isset($parent_attributes[$attribute_name]) && !$parent_attributes[$attribute_name]->get_variation() && $use_variation !== 'no') {
                 // Re-create the attribute to CRUD save and generate again.
                 $parent_attributes[$attribute_name] = clone $parent_attributes[$attribute_name];
                 $parent_attributes[$attribute_name]->set_variation(1);
