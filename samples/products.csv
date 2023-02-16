@@ -1,0 +1,9 @@
+"Name"," Price"," SKU"," Product Type"," Grouped Products","Product Url","Parent","Colour",Images,Image Title,Tag,Categories
+"Simple Product 1"," 10.99","simple-one","simple",,,,,"https://picsum.photos/id/1/550/500.webp, https://picsum.photos/id/9/550/500.webp","Image Title 1, Image Title 9",Simple,Products > Simple
+"Simple Product 2","12.99","simple-two","simple",,,,,https://picsum.photos/id/2/550/500.webp,Image Title 2,Simple,Products > Simple
+"Simple Product 3","14.99","simple-three","simple",,,,,https://picsum.photos/id/3/550/500.webp,Image Title 3,Simple,Products > Simple
+"Grouped Product 1",,"group-one","grouped","simple-one, simple-two",,,,https://picsum.photos/id/4/550/500.webp,Image Title 4,Grouped,Products > Grouped
+"External product 1","10.99","external-one","external",,"https://www.importwp.com/integrations/import-export-woocommerce-plugin/",,,https://picsum.photos/id/5/550/500.webp,Image Title 5,External,Products > External
+"Variable Product 1",,"variable-one","variable",,,,"red,blue",https://picsum.photos/id/6/550/500.webp,Image Title 6,Variable,Products > Variable
+"Product Variation 1","10.99","variation-one","variation",,,"variable-one","red",https://picsum.photos/id/7/550/500.webp,Image Title 7,,
+"Product Variation 2","12.99","variation-two","variation",,,"variable-one","blue",https://picsum.photos/id/8/550/500.webp,Image Title 8,,

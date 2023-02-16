@@ -2,7 +2,7 @@
 
 Requires Import WP: 2.5.0
 
-**Version: 2.1.2**
+**Version: 2.2.0**
 
 ![WooCommerce Product Importer](./assets/iwp-addon-woocommerce.png)
 
@@ -52,6 +52,10 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 
 ## Changelog
 
+### 2.2.0
+
+- FIX - Update exporter to work with Import WP 2.7.0
+
 ### 2.1.2
 
-* Add - New Attribute "Used for variations" field.
+- Add - New Attribute "Used for variations" field.

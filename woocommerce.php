@@ -5,7 +5,7 @@
  * Plugin URI: https://www.importwp.com
  * Description: Allow Import WP to import WooCommerce Products.
  * Author: James Collings <james@jclabs.co.uk>
- * Version: 2.1.2 
+ * Version: 2.2.0 
  * Author URI: https://www.importwp.com
  * Network: True
  */
@@ -45,6 +45,7 @@ function iwp_woocommerce_setup()
 
     require_once $base_path . '/class/autoload.php';
     require_once $base_path . '/setup.php';
+    require_once $base_path . '/exporter.php';
 
     // Install updater
     if (file_exists($base_path . '/updater.php') && !class_exists('IWP_Updater')) {
