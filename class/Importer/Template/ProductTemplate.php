@@ -1004,17 +1004,6 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $append = $raw_attributes[$prefix . 'append'];
                 $use_variation = isset($raw_attributes[$prefix . 'variation']) ? $raw_attributes[$prefix . 'variation'] : '';
 
-                if ($data->permission()) {
-                    $permission_key = 'product_attributes.' . $i;
-                    $allowed = $data->permission()->validate([$permission_key => ''], $data->getMethod(), 'attributes');
-                    $is_allowed = isset($allowed[$permission_key]) ? true : false;
-
-                    if (!$is_allowed) {
-                        $skipped++;
-                        continue;
-                    }
-                }
-
                 if (empty($name)) {
                     continue;
                 }
@@ -1026,15 +1015,29 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     $attribute_id = $this->get_attribute_taxonomy_id($name);
                 }
 
+                // Get name.
+                $attribute_name = $attribute_id ? wc_attribute_taxonomy_name_by_id($attribute_id) : wc_sanitize_taxonomy_name($name);
+
+                if ($data->permission()) {
+                    $permission_key = 'product_attributes.' . $i;
+                    $allowed = $data->permission()->validate([$permission_key => ''], $data->getMethod(), 'attributes');
+                    $is_allowed = isset($allowed[$permission_key]) ? true : false;
+
+                    if (!$is_allowed) {
+                        $skipped++;
+                        if (isset($existing_attributes[$attribute_name])) {
+                            $attributes[] = $existing_attributes[$attribute_name];
+                        }
+                        continue;
+                    }
+                }
+
                 // Set attribute visibility.
                 if (isset($visible)) {
                     $is_visible = $visible;
                 } else {
                     $is_visible = 1;
                 }
-
-                // Get name.
-                $attribute_name = $attribute_id ? wc_attribute_taxonomy_name_by_id($attribute_id) : $name;
 
                 // allow to keep existing attributes
                 $existing_options = isset($existing_attributes[$attribute_name]) ? $existing_attributes[$attribute_name]->get_options() : [];
