@@ -55,6 +55,7 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 ### 2.2.0
 
 - FIX - Update exporter to work with Import WP 2.7.0
+- FIX - fix product attribute permissions
 
 ### 2.1.2
 
