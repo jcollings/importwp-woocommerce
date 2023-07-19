@@ -989,10 +989,19 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         $attributes          = [];
         $skipped = 0;
 
+        /**
+         * Add filter to append attributes instead clearing existing.
+         * @since 2.2.0
+         */
+        $keep_existing = apply_filters('iwp/woocommerce/product_attributes/keep_existing', false);
+
         if ($record_count > 0) {
 
             $default_attributes  = [];
             $existing_attributes = $product->get_attributes();
+            if ($keep_existing) {
+                $attributes = $existing_attributes;
+            }
 
             for ($i = 0; $i < $record_count; $i++) {
 
@@ -1025,9 +1034,6 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
                     if (!$is_allowed) {
                         $skipped++;
-                        if (isset($existing_attributes[$attribute_name])) {
-                            $attributes[] = $existing_attributes[$attribute_name];
-                        }
                         continue;
                     }
                 }
@@ -1075,20 +1081,6 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
                     $options = array_unique(array_merge($existing_options, $options));
 
-                    // Check for default attributes and set "is_variation".
-                    // if (isset($attribute['default']) && !empty($attribute['default']) && in_array($attribute['default'], $options, true)) {
-                    //     $default_term = get_term_by('name', $attribute['default'], $attribute_name);
-
-                    //     if ($default_term && !is_wp_error($default_term)) {
-                    //         $default = $default_term->slug;
-                    //     } else {
-                    //         $default = sanitize_title($attribute['default']);
-                    //     }
-
-                    //     $default_attributes[$attribute_name] = $default;
-                    //     $is_variation                          = 1;
-                    // }
-
                     if (!empty($options)) {
                         $attribute_object = new \WC_Product_Attribute();
                         $attribute_object->set_id($attribute_id);
@@ -1097,14 +1089,10 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                         $attribute_object->set_position($i);
                         $attribute_object->set_visible($is_visible);
                         $attribute_object->set_variation($is_variation);
-                        $attributes[] = $attribute_object;
+
+                        $attributes[$attribute_name] = $attribute_object;
                     }
                 } elseif (isset($terms)) {
-                    // Check for default attributes and set "is_variation".
-                    // if (isset($attribute['default']) && !empty($attribute['default']) && in_array($attribute['default'], $terms, true)) {
-                    //     $default_attributes[sanitize_title($name)] = $attribute['default'];
-                    //     $is_variation = 1;
-                    // }
 
                     $attribute_object = new \WC_Product_Attribute();
                     $attribute_object->set_name($name);
@@ -1112,7 +1100,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     $attribute_object->set_position($i);
                     $attribute_object->set_visible($is_visible);
                     $attribute_object->set_variation($is_variation);
-                    $attributes[] = $attribute_object;
+                    $attributes[$attribute_name] = $attribute_object;
                 }
             }
         }
