@@ -2,7 +2,7 @@
 
 Requires Import WP: 2.5.0
 
-**Version: 2.2.0**
+**Version: __STABLE_TAG__**
 
 ![WooCommerce Product Importer](./assets/iwp-addon-woocommerce.png)
 
@@ -56,6 +56,7 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 
 - FIX - Update exporter to work with Import WP 2.7.0
 - FIX - fix product attribute permissions
+- ADD - new filter `iwp/woocommerce/product_attributes/keep_existing` to allow appending of attributes.
 
 ### 2.1.2
 
