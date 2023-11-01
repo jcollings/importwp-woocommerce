@@ -1057,8 +1057,16 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 // convert csv of terms to array
                 if (isset($terms)) {
                     if (!is_array($terms)) {
-                        $terms = explode(',', $terms);
+                        $terms = explode(',', trim($terms));
                     }
+                }
+
+                // remove empty array elements
+                $terms = array_filter($terms);
+
+                // skip variation attributes if they are empty on the variable product.
+                if (apply_filters('iwp/wc_ignore_empty_variable_attributes', true) === true && $use_variation !== 'no' && $product->is_type('variable') && empty($terms)) {
+                    continue;
                 }
 
                 if ($attribute_id) {
