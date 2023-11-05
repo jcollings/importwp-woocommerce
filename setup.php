@@ -62,3 +62,13 @@ function iwp_woocommerce_register_mappers($mappers)
     $mappers['woocommerce-product'] = ProductMapper::class;
     return $mappers;
 }
+
+function iwp_woocommerce_mapper_unique_fields($unique_fields, $mapper_id)
+{
+    if ($mapper_id == 'woocommerce-product') {
+        return ['ID', '_sku', 'post_name'];
+    }
+
+    return $unique_fields;
+}
+add_filter('iwp/mapper/unique_fields', 'iwp_woocommerce_mapper_unique_fields', 10, 2);
