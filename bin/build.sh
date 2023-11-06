@@ -6,6 +6,7 @@ if [ $# -lt 1 ]; then
 fi
 
 TAG=${1-latest}
+BRANCH=${2-release}
 
 # Absolute path to this script, e.g. /home/user/bin/foo.sh
 SCRIPT=$(readlink -f "$0")
@@ -21,7 +22,6 @@ if [ -f "package.json" ]; then
     npm run build
 fi
 
-BRANCH=release
 FOLDER=build
 
 # Move to other directory
