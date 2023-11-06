@@ -989,19 +989,10 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         $attributes          = [];
         $skipped = 0;
 
-        /**
-         * Add filter to append attributes instead clearing existing.
-         * @since 2.2.0
-         */
-        $keep_existing = apply_filters('iwp/woocommerce/product_attributes/keep_existing', false);
-
         if ($record_count > 0) {
 
             $default_attributes  = [];
             $existing_attributes = $product->get_attributes();
-            if ($keep_existing) {
-                $attributes = $existing_attributes;
-            }
 
             for ($i = 0; $i < $record_count; $i++) {
 
@@ -1012,20 +1003,6 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $visible = $raw_attributes[$prefix . 'visible'];
                 $append = $raw_attributes[$prefix . 'append'];
                 $use_variation = isset($raw_attributes[$prefix . 'variation']) ? $raw_attributes[$prefix . 'variation'] : '';
-
-                if (empty($name)) {
-                    continue;
-                }
-
-                $attribute_id = 0;
-
-                // Get ID if is a global attribute.
-                if ($global === 'yes') {
-                    $attribute_id = $this->get_attribute_taxonomy_id($name);
-                }
-
-                // Get name.
-                $attribute_name = $attribute_id ? wc_attribute_taxonomy_name_by_id($attribute_id) : wc_sanitize_taxonomy_name($name);
 
                 if ($data->permission()) {
                     $permission_key = 'product_attributes.' . $i;
@@ -1038,12 +1015,26 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                 }
 
+                if (empty($name)) {
+                    continue;
+                }
+
+                $attribute_id = 0;
+
+                // Get ID if is a global attribute.
+                if ($global === 'yes') {
+                    $attribute_id = $this->get_attribute_taxonomy_id($name);
+                }
+
                 // Set attribute visibility.
                 if (isset($visible)) {
                     $is_visible = $visible;
                 } else {
                     $is_visible = 1;
                 }
+
+                // Get name.
+                $attribute_name = $attribute_id ? wc_attribute_taxonomy_name_by_id($attribute_id) : $name;
 
                 // allow to keep existing attributes
                 $existing_options = isset($existing_attributes[$attribute_name]) ? $existing_attributes[$attribute_name]->get_options() : [];
@@ -1066,8 +1057,16 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 // convert csv of terms to array
                 if (isset($terms)) {
                     if (!is_array($terms)) {
-                        $terms = explode(',', $terms);
+                        $terms = explode(',', trim($terms));
                     }
+                }
+
+                // remove empty array elements
+                $terms = array_filter($terms);
+
+                // skip variation attributes if they are empty on the variable product.
+                if (apply_filters('iwp/wc_ignore_empty_variable_attributes', true) === true && $use_variation !== 'no' && $product->is_type('variable') && empty($terms)) {
+                    continue;
                 }
 
                 if ($attribute_id) {
@@ -1081,6 +1080,20 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
                     $options = array_unique(array_merge($existing_options, $options));
 
+                    // Check for default attributes and set "is_variation".
+                    // if (isset($attribute['default']) && !empty($attribute['default']) && in_array($attribute['default'], $options, true)) {
+                    //     $default_term = get_term_by('name', $attribute['default'], $attribute_name);
+
+                    //     if ($default_term && !is_wp_error($default_term)) {
+                    //         $default = $default_term->slug;
+                    //     } else {
+                    //         $default = sanitize_title($attribute['default']);
+                    //     }
+
+                    //     $default_attributes[$attribute_name] = $default;
+                    //     $is_variation                          = 1;
+                    // }
+
                     if (!empty($options)) {
                         $attribute_object = new \WC_Product_Attribute();
                         $attribute_object->set_id($attribute_id);
@@ -1089,10 +1102,14 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                         $attribute_object->set_position($i);
                         $attribute_object->set_visible($is_visible);
                         $attribute_object->set_variation($is_variation);
-
-                        $attributes[$attribute_name] = $attribute_object;
+                        $attributes[] = $attribute_object;
                     }
                 } elseif (isset($terms)) {
+                    // Check for default attributes and set "is_variation".
+                    // if (isset($attribute['default']) && !empty($attribute['default']) && in_array($attribute['default'], $terms, true)) {
+                    //     $default_attributes[sanitize_title($name)] = $attribute['default'];
+                    //     $is_variation = 1;
+                    // }
 
                     $attribute_object = new \WC_Product_Attribute();
                     $attribute_object->set_name($name);
@@ -1100,7 +1117,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     $attribute_object->set_position($i);
                     $attribute_object->set_visible($is_visible);
                     $attribute_object->set_variation($is_variation);
-                    $attributes[$attribute_name] = $attribute_object;
+                    $attributes[] = $attribute_object;
                 }
             }
         }

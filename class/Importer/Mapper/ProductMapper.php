@@ -8,6 +8,10 @@ use ImportWP\Common\Importer\ParsedData;
 
 class ProductMapper extends PostMapper implements MapperInterface
 {
+    /**
+     * Only used for backwards compatability with ImportWP
+     * @var string[]
+     */
     protected $_unique_fields = ['ID', '_sku', 'post_name'];
 
     public function create_post($post, ParsedData $data)
