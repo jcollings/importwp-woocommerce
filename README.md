@@ -55,10 +55,13 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 ### 2.2.1
 
 - ADD - Add filter `iwp/wc_ignore_empty_variable_attributes` to exclude empty terms when importing variable products.
+- ADD - Add list of unique fields to new dropdown in ImportWP v2.8.2
 
 ### 2.2.0
 
 - FIX - Update exporter to work with Import WP 2.7.0
+- FIX - fix product attribute permissions
+- ADD - new filter `iwp/woocommerce/product_attributes/keep_existing` to allow appending of attributes.
 
 ### 2.1.2
 
