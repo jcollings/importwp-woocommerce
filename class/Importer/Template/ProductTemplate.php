@@ -1424,4 +1424,90 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
         return $output;
     }
+
+
+    public function get_permission_fields($importer_model)
+    {
+        $permission_fields = parent::get_permission_fields($importer_model);
+
+        $permission_fields['woocommerce'] = [
+
+            'product_type' => 'Product Type',
+            '_virtual' => 'Virtual',
+            '_downloadable' => 'Downloadable',
+            '_visibility' => 'Catalog visibility',
+            '_product_url' => 'Product URL',
+            '_button_text' => 'Product URL Button Text',
+            'tax_status' => 'Tax Status',
+            'tax_class' => 'Tax Class',
+
+            // advanced
+            '_purchase_note' => 'Purchase note',
+            '_download_limit' => 'Download Limit',
+            '_download_expiry' => 'Download Expiry',
+        ];
+
+        $permission_fields['woocommerce_price'] = [
+
+            // Price
+            '_regular_price' => 'Regular Price',
+            '_sale_price' => 'Sale Price',
+            '_sale_price_dates_to' => 'Sale Price To',
+            '_sale_price_dates_from' => 'Sale Price From',
+        ];
+
+        $permission_fields['woocommerce_inventory'] = [
+
+            // inventory
+            '_sku' => 'Product SKU',
+            '_stock_status' => 'Stock status',
+            '_manage_stock' => 'Manage Stock',
+            '_stock' => 'Stock quantity',
+            '_backorders' => 'Allow back-orders',
+            '_low_stock_amount' => 'Low stock threshold',
+            '_sold_individually' => 'Sold individually',
+        ];
+
+        $permission_fields['woocommerce_shipping'] = [
+
+            // shipping
+            '_weight' => 'Weight',
+            '_length' => 'Length',
+            '_width' => 'Width',
+            '_height' => 'Height',
+            'shipping_class' => 'Shipping Class',
+        ];
+
+        $field_map = $importer_model->getMap();
+        if (isset($field_map['attributes._index']) && $field_map['attributes._index'] > 0) {
+            $permission_fields['product_attributes'] = [];
+            for ($i = 0; $i < $field_map['attributes._index']; $i++) {
+                $permission_fields['product_attributes']['product_attributes.' . $i] = 'Attributes Row ' . ($i + 1);
+            }
+        }
+
+        $field_map = $importer_model->getMap();
+        if (isset($field_map['downloads._index']) && $field_map['downloads._index'] > 0) {
+            $permission_fields['product_downloads'] = [];
+            for ($i = 0; $i < $field_map['downloads._index']; $i++) {
+                $permission_fields['product_downloads']['product_downloads.' . $i] = 'Product Downloads Row ' . ($i + 1);
+            }
+        }
+
+        $field_map = $importer_model->getMap();
+        if (isset($field_map['product_gallery._index']) && $field_map['product_gallery._index'] > 0) {
+            $permission_fields['product_gallery'] = [];
+            for ($i = 0; $i < $field_map['product_gallery._index']; $i++) {
+                $permission_fields['product_gallery']['product_gallery.' . $i] = 'Product Gallery Row ' . ($i + 1);
+            }
+        }
+
+        $permission_fields['woocommerce_related_products'] = [
+            'product_upsell' => 'Product Upsells',
+            'product_crosssell' => 'Product Cross-sells',
+            'product_grouped' => 'Product Grouped',
+        ];
+
+        return $permission_fields;
+    }
 }
