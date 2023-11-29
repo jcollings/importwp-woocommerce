@@ -368,7 +368,11 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             if ($parent_field_type === 'name' || $parent_field_type === 'slug') {
 
                 // name or slug
-                $page = get_posts(array('name' => sanitize_title($post_parent_value), 'post_type' => $this->importer->getSetting('post_type')));
+                $page = get_posts([
+                    'name' => sanitize_title($post_parent_value),
+                    'post_type' => $this->importer->getSetting('post_type'),
+                    'post_status' => 'any, trash, future'
+                ]);
                 if ($page) {
                     $parent_id = intval($page[0]->ID);
                 }
@@ -794,7 +798,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
         $group = 'downloads';
         $raw_downloads = $data->getData($group);
-        $record_count = intval($raw_downloads[$group . '._index']);
+        $record_count = isset($raw_downloads[$group . '._index']) ? intval($raw_downloads[$group . '._index']) : 0;
         $skipped = 0;
 
         $downloads = [];
@@ -1110,10 +1114,15 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $is_variation = 0;
 
                 if ($use_variation !== 'no' && $existing_attributes) {
-                    foreach ($existing_attributes as $existing_attribute) {
-                        if ($existing_attribute->get_name() === $attribute_name) {
-                            $is_variation = $existing_attribute->get_variation();
-                            break;
+
+                    if ($use_variation === 'yes') {
+                        $is_variation = 1;
+                    } else {
+                        foreach ($existing_attributes as $existing_attribute) {
+                            if ($existing_attribute->get_name() === $attribute_name) {
+                                $is_variation = $existing_attribute->get_variation();
+                                break;
+                            }
                         }
                     }
                 }
@@ -1121,16 +1130,18 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 // convert csv of terms to array
                 if (isset($terms)) {
                     if (!is_array($terms)) {
-                        $terms = explode(',', trim($terms));
+                        $attribute_delimiter = apply_filters('iwp/woocommerce/attribute/delimiter', ',');
+                        $attribute_delimiter = apply_filters('iwp/woocommerce/attribute/' . $attribute_name . '/delimiter', $attribute_delimiter);
+                        $terms = explode($attribute_delimiter, $terms);
                     }
-                }
 
-                // remove empty array elements
-                $terms = array_filter($terms);
+                    // remove empty array elements
+                    $terms = array_filter($terms);
 
-                // skip variation attributes if they are empty on the variable product.
-                if (apply_filters('iwp/wc_ignore_empty_variable_attributes', true) === true && $use_variation !== 'no' && $product->is_type('variable') && empty($terms)) {
-                    continue;
+                    // skip variation attributes if they are empty on the variable product.
+                    if (apply_filters('iwp/wc_ignore_empty_variable_attributes', true) === true && $use_variation !== 'no' && $product->is_type('variable') && empty($terms)) {
+                        continue;
+                    }
                 }
 
                 if ($attribute_id) {
@@ -1441,7 +1452,8 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     'key'   => '_sku',
                     'value' => $sku
                 )
-            )
+            ),
+            'post_status' => 'any, trash, future'
         ));
 
         if ($query->have_posts()) {
