@@ -57,10 +57,6 @@ class ProductMapper extends PostMapper implements MapperInterface
             $wc_data = $data->permission()->validate($wc_data, $data->getMethod(), 'product');
         }
 
-        if (!isset($wc_data['post_title'])) {
-            return new \WP_Error('IWP_WC_01', 'Unable to insert product (product title is required).');
-        }
-
         if (isset($wc_data['post_title']) && !empty($wc_data['post_title'])) {
             $product->set_name($wc_data['post_title']);
         }
