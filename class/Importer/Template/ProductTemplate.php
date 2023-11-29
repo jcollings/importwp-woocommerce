@@ -853,13 +853,15 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         }
 
         // Stop if parent does not exists.
-        if (!$parent) {
-            throw new \Exception(__('Variation cannot be imported: Missing parent ID or parent does not exist yet.', 'woocommerce'));
-        }
+        if ($data->isInsert()) {
+            if (!$parent) {
+                throw new \Exception(__('Variation cannot be imported: Missing parent ID or parent does not exist yet.', 'woocommerce'));
+            }
 
-        // Stop if parent is a product variation.
-        if ($parent->is_type('variation')) {
-            throw new \Exception(__('Variation cannot be imported: Parent product cannot be a product variation', 'woocommerce'));
+            // Stop if parent is a product variation.
+            if ($parent->is_type('variation')) {
+                throw new \Exception(__('Variation cannot be imported: Parent product cannot be a product variation', 'woocommerce'));
+            }
         }
 
         $raw_attributes = $data->getData('attributes');
@@ -867,6 +869,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
         $attributes = array();
         $skipped = 0;
+        $update_parent = false;
 
         if ($record_count > 0) {
             $parent_attributes = $this->get_variation_parent_attributes($raw_attributes, $parent);
@@ -878,6 +881,12 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $terms = $raw_attributes[$prefix . 'terms'];
                 $global = $raw_attributes[$prefix . 'global'];
                 $visible = $raw_attributes[$prefix . 'visible'];
+                $use_variation = isset($raw_attributes[$prefix . 'variation']) ? $raw_attributes[$prefix . 'variation'] : '';
+
+                if ($use_variation === 'no') {
+                    $skipped++;
+                    continue;
+                }
 
                 $permission_key = 'product_attributes.' . $i; //attributes.$name
 
@@ -903,30 +912,85 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     $attribute_name = sanitize_title($name);
                 }
 
-                if (!isset($parent_attributes[$attribute_name]) || !$parent_attributes[$attribute_name]->get_variation()) {
-                    continue;
+                // if parent has variation flag set then we use that.
+                if (isset($parent_attributes[$attribute_name]) && $parent_attributes[$attribute_name]->get_variation()) {
+                    $use_variation = 'yes';
                 }
 
-                $attribute_key   = sanitize_title($parent_attributes[$attribute_name]->get_name());
-                $attribute_value = $terms;
+                // Add attribute onto parent
+                // TODO: tidy up duplicate code
 
-                if ($parent_attributes[$attribute_name]->is_taxonomy()) {
-                    // If dealing with a taxonomy, we need to get the slug from the name posted to the API.
-                    $term = get_term_by('name', $attribute_value, $attribute_name);
+                $existing_options = isset($parent_attributes[$attribute_name]) ? $parent_attributes[$attribute_name]->get_options() : [];
 
-                    if ($term && !is_wp_error($term)) {
-                        $attribute_value = $term->slug;
-                    } else {
-                        $attribute_value = sanitize_title($attribute_value);
+                if (isset($terms)) {
+                    if (!is_array($terms)) {
+                        $attribute_delimiter = apply_filters('iwp/woocommerce/attribute/delimiter', ',');
+                        $attribute_delimiter = apply_filters('iwp/woocommerce/attribute/' . $attribute_name . '/delimiter', $attribute_delimiter);
+                        $terms = explode($attribute_delimiter, $terms);
                     }
                 }
 
-                $attributes[$attribute_key] = $attribute_value;
+                if ($attribute_id) {
+                    if (isset($terms)) {
+
+                        $options = array_map('wc_sanitize_term_text_based', $terms);
+                        $options = array_filter($options, 'strlen');
+                    } else {
+                        $options = array();
+                    }
+
+                    $options = array_unique(array_merge($existing_options, $options));
+
+                    if (!empty($options)) {
+                        $attribute_object = new \WC_Product_Attribute();
+                        $attribute_object->set_id($attribute_id);
+                        $attribute_object->set_name($attribute_name);
+                        $attribute_object->set_options($options);
+                        $attribute_object->set_variation($use_variation !== 'no');
+                        $attribute_object->set_visible($visible === 'yes');
+                        $parent_attributes[$attribute_name] = $attribute_object;
+                        $update_parent = true;
+                    }
+                } elseif (isset($terms)) {
+
+                    $attribute_object = new \WC_Product_Attribute();
+                    $attribute_object->set_name($name);
+                    $attribute_object->set_options($terms);
+                    $attribute_object->set_variation($use_variation !== 'no');
+                    $attribute_object->set_visible($visible === 'yes');
+                    $parent_attributes[$attribute_name] = $attribute_object;
+                    $update_parent = true;
+                }
+
+                if ($use_variation !== 'no') {
+
+                    $attribute_key   = sanitize_title($attribute_object->get_name());
+                    $attribute_value = is_array($terms) ? $terms[0] : $terms;
+
+
+                    if ($attribute_object->is_taxonomy()) {
+                        // If dealing with a taxonomy, we need to get the slug from the name posted to the API.
+                        $term = get_term_by('name', $attribute_value, $attribute_name);
+
+                        if ($term && !is_wp_error($term)) {
+                            $attribute_value = $term->slug;
+                        } else {
+                            $attribute_value = sanitize_title($attribute_value);
+                        }
+                    }
+
+                    $attributes[$attribute_key] = $attribute_value;
+                }
             }
         }
 
         if ($record_count > $skipped) {
             $variation->set_attributes($attributes);
+        }
+
+        if ($update_parent) {
+            $parent->set_attributes($parent_attributes);
+            $parent->save();
         }
     }
 
