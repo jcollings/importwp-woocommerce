@@ -52,6 +52,14 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 
 ## Changelog
 
+### 2.3.1
+
+- FIX - Product variations now add required attributes to its parent variable product.
+
+### 2.3.0
+
+- ADD - Add Product fields to ImportWP new Permission field Interface.
+
 ### 2.2.1
 
 - ADD - Add filter `iwp/wc_ignore_empty_variable_attributes` to exclude empty terms when importing variable products.
