@@ -133,7 +133,10 @@ class ProductMapper extends PostMapper
         $this->record['sku'] = $product->get_sku();
 
         // extra parent fields
-        $this->record['parent']['sku'] = get_post_meta($this->record['parent']['id'], '_sku', true);
+        $this->record['parent']['sku'] = '';
+        if ($this->record['post_parent'] > 0) {
+            $this->record['parent']['sku'] = get_post_meta($this->record['post_parent'], '_sku', true);
+        }
 
         // Product attributes
         $this->record['product_attributes'] = [];
