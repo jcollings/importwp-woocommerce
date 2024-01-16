@@ -1794,7 +1794,15 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $data['visible'] = isset($attribute_data['map']['visible']) ? $attribute_data['map']['visible'] : '';
                 $data['variation'] = isset($attribute_data['map']['variation']) ? $attribute_data['map']['variation'] : '';
 
+                if (!empty($data['visible'])) {
+                    $data['visible._enable_text'] = 'yes';
+                }
+                if (!empty($data['variation'])) {
+                    $data['variation._enable_text'] = 'yes';
+                }
+
                 $data = wp_parse_args($data, $defaults);
+
 
                 $map = array_merge($map, array_reduce(array_keys($data), function ($carry, $key) use ($data, $attribute_counter) {
                     $carry[sprintf('attributes.%d.%s', $attribute_counter, $key)] = $data[$key];
