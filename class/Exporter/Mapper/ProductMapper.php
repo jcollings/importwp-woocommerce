@@ -8,7 +8,7 @@ class ProductMapper extends PostMapper
 {
     public function __construct($post_type = 'post')
     {
-        $this->post_type = $post_type;
+        parent::__construct($post_type);
     }
 
     public function get_fields()
@@ -134,8 +134,8 @@ class ProductMapper extends PostMapper
 
         // extra parent fields
         $this->record['parent']['sku'] = '';
-        if ($this->record['post_parent'] > 0) {
-            $this->record['parent']['sku'] = get_post_meta($this->record['post_parent'], '_sku', true);
+        if ($this->record['parent']['id'] > 0) {
+            $this->record['parent']['sku'] = get_post_meta($this->record['parent']['id'], '_sku', true);
         }
 
         // Product attributes
