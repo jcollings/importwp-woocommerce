@@ -1064,11 +1064,11 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             for ($i = 0; $i < $record_count; $i++) {
 
                 $prefix = 'attributes.' . $i . '.';
-                $name = $raw_attributes[$prefix . 'name'];
-                $terms = $raw_attributes[$prefix . 'terms'];
-                $global = $raw_attributes[$prefix . 'global'];
-                $visible = $raw_attributes[$prefix . 'visible'];
-                $append = $raw_attributes[$prefix . 'append'];
+                $name = isset($raw_attributes[$prefix . 'name']) ? $raw_attributes[$prefix . 'name'] : '';
+                $terms = isset($raw_attributes[$prefix . 'terms']) ? $raw_attributes[$prefix . 'terms'] : '';
+                $global = isset($raw_attributes[$prefix . 'global']) ? $raw_attributes[$prefix . 'global'] : '';
+                $visible = isset($raw_attributes[$prefix . 'visible']) ? $raw_attributes[$prefix . 'visible'] : '';
+                $append = isset($raw_attributes[$prefix . 'append']) ? $raw_attributes[$prefix . 'append'] : '';
                 $use_variation = isset($raw_attributes[$prefix . 'variation']) ? $raw_attributes[$prefix . 'variation'] : '';
 
                 if ($data->permission()) {
@@ -1197,6 +1197,23 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         }
 
         if ($record_count > $skipped) {
+
+            $append_attributes = apply_filters('iwp/woocommerce/append_attributes', false);
+            if ($append_attributes) {
+
+                $append_list = [];
+
+                foreach ($attributes as $attribute) {
+                    if (isset($existing_attributes[$attribute->get_name()])) {
+                        $existing_attributes[$attribute->get_name()] = $attribute;
+                    } else {
+                        $append_list[] = $attribute;
+                    }
+                }
+
+                $attributes = array_merge($existing_attributes, $append_list);
+            }
+
             $product->set_attributes($attributes);
         }
 
@@ -1574,7 +1591,23 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         $map = $result['map'];
         $enabled = $result['enabled'];
 
+        $attributes = [];
+
         foreach ($fields as $index => $field) {
+
+            if (preg_match('/^product_attributes\.(.*?)::(.*?)$/', $field, $matches) === 1) {
+
+                $attribute = $matches[1];
+                if (!isset($attributes[$attribute])) {
+                    $attributes[$attribute] = [
+                        'map' => []
+                    ];
+                }
+
+                $attributes[$attribute]['map'][$matches[2]] = sprintf('{%d}', $index);
+
+                continue;
+            }
 
             switch ($field) {
 
@@ -1623,6 +1656,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     break;
 
                     // inventory
+                case 'sku':
                 case 'custom_fields._sku':
                     $map['inventory._sku'] = sprintf('{%d}', $index);
                     break;
@@ -1670,6 +1704,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     break;
 
                     // shipping
+                case 'woocommerce.weight':
                 case 'custom_fields._weight':
                     $map['shipping.dimensions._weight'] = sprintf('{%d}', $index);
 
@@ -1677,6 +1712,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                         $enabled[] = 'shipping.dimensions';
                     }
                     break;
+                case 'woocommerce.length':
                 case 'custom_fields._length':
                     $map['shipping.dimensions._length'] = sprintf('{%d}', $index);
 
@@ -1684,6 +1720,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                         $enabled[] = 'shipping.dimensions';
                     }
                     break;
+                case 'woocommerce.width':
                 case 'custom_fields._width':
                     $map['shipping.dimensions._width'] = sprintf('{%d}', $index);
 
@@ -1691,6 +1728,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                         $enabled[] = 'shipping.dimensions';
                     }
                     break;
+                case 'woocommerce.height':
                 case 'custom_fields._height':
                     $map['shipping.dimensions._height'] = sprintf('{%d}', $index);
 
@@ -1724,7 +1762,52 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             }
         }
 
-        // TODO: product attributes INLINE / GLOBAL
+        // TODO: product attributes INLINE / GLOBAL (starts with pa_ and taxonomy_exists)
+        $attributes = apply_filters('iwp/woocommerce/generate_field_map/attributes', $attributes, $fields, $importer);
+        if (!empty($attributes)) {
+
+            $attribute_counter = 0;
+            $defaults = [
+                'row_base' => '',
+                'name' => '',
+                'terms' => '',
+                'global' => '',
+                'visible' => '',
+                'append' => '',
+                'variation' => '',
+            ];
+
+            foreach ($attributes as $attribute => $attribute_data) {
+                $data = [];
+
+                if (preg_match('/^pa_(.*?)$/', $attribute, $matches) && taxonomy_exists($attribute)) {
+                    // global
+                    $data['global'] = 'yes';
+                    $data['name'] = $matches[1];
+                } else {
+                    // custom
+                    $data['global'] = 'no';
+                    $data['name'] = $attribute;
+                }
+
+                $data['terms'] = isset($attribute_data['map']['name']) ? $attribute_data['map']['name'] : '';
+                $data['visible'] = isset($attribute_data['map']['visible']) ? $attribute_data['map']['visible'] : '';
+                $data['variation'] = isset($attribute_data['map']['variation']) ? $attribute_data['map']['variation'] : '';
+
+                $data = wp_parse_args($data, $defaults);
+
+                $map = array_merge($map, array_reduce(array_keys($data), function ($carry, $key) use ($data, $attribute_counter) {
+                    $carry[sprintf('attributes.%d.%s', $attribute_counter, $key)] = $data[$key];
+                    return $carry;
+                }, []));
+
+                $attribute_counter++;
+            }
+
+            $map['attributes._index'] = $attribute_counter;
+        }
+
+
         // TODO: crosssell's
         // TODO: upsells
         // TODO: downloads
