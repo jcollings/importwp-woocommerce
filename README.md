@@ -2,7 +2,7 @@
 
 Requires Import WP: 2.5.0
 
-**Version: 2.3.1**
+**Version: 2.3.2**
 
 ![WooCommerce Product Importer](./assets/iwp-addon-woocommerce.png)
 
@@ -51,6 +51,14 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 ## Screenshots
 
 ## Changelog
+
+### 2.3.1
+
+- FIX - Product variations now add required attributes to its parent variable product.
+
+### 2.3.0
+
+- ADD - Add Product fields to ImportWP new Permission field Interface.
 
 ### 2.2.1
 

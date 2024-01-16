@@ -49,6 +49,8 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         $this->field_options = array_merge($this->field_options, [
             'advanced._parent.parent' => [$this, 'get_post_parent_options'],
         ]);
+
+        add_filter('iwp/importer/generate_field_map/custom_fields', [$this, 'generate_field_map_remove_wc_custom_fields']);
     }
 
     public function register()
@@ -213,7 +215,6 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $this->register_field('Width', '_width'),
                 $this->register_field('Height', '_height'),
             ]),
-            $this->register_field('Shipping Class', 'shipping_class')
         ]);
 
         $linked_products_field_type = $this->register_field('Type', '_field_type', [
@@ -426,7 +427,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             'post_status' => $data->getValue('post.post_status', 'post'),
             'product_type' => $data->getValue('post.product_type', 'post'),
             '_virtual' => $data->getValue('post._virtual', 'post'),
-            '_downloadable' => $data->getValue('post._virtual', 'post'),
+            '_downloadable' => $data->getValue('post._downloadable', 'post'),
             '_visibility' => $data->getValue('post._visibility', 'post'),
             '_product_url' => $data->getValue('post.external._product_url', 'post'),
             '_button_text' => $data->getValue('post.external._button_text', 'post'),
@@ -452,7 +453,6 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             '_length' => $data->getValue('shipping.dimensions._length', 'shipping'),
             '_width' => $data->getValue('shipping.dimensions._width', 'shipping'),
             '_height' => $data->getValue('shipping.dimensions._height', 'shipping'),
-            'shipping_class' => $data->getValue('shipping.shipping_class', 'shipping'),
 
             // advanced
             '_purchase_note' => $data->getValue('advanced._purchase_note', 'advanced'),
@@ -494,7 +494,6 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             '_length' => 'shipping.dimensions',
             '_width' => 'shipping.dimensions',
             '_height' => 'shipping.dimensions',
-            'shipping_class' => 'shipping.dimensions',
 
             // advanced
             // TODO: '' => 'advanced._parent',
@@ -1065,11 +1064,11 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             for ($i = 0; $i < $record_count; $i++) {
 
                 $prefix = 'attributes.' . $i . '.';
-                $name = $raw_attributes[$prefix . 'name'];
-                $terms = $raw_attributes[$prefix . 'terms'];
-                $global = $raw_attributes[$prefix . 'global'];
-                $visible = $raw_attributes[$prefix . 'visible'];
-                $append = $raw_attributes[$prefix . 'append'];
+                $name = isset($raw_attributes[$prefix . 'name']) ? $raw_attributes[$prefix . 'name'] : '';
+                $terms = isset($raw_attributes[$prefix . 'terms']) ? $raw_attributes[$prefix . 'terms'] : '';
+                $global = isset($raw_attributes[$prefix . 'global']) ? $raw_attributes[$prefix . 'global'] : '';
+                $visible = isset($raw_attributes[$prefix . 'visible']) ? $raw_attributes[$prefix . 'visible'] : '';
+                $append = isset($raw_attributes[$prefix . 'append']) ? $raw_attributes[$prefix . 'append'] : '';
                 $use_variation = isset($raw_attributes[$prefix . 'variation']) ? $raw_attributes[$prefix . 'variation'] : '';
 
                 if ($data->permission()) {
@@ -1198,6 +1197,23 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         }
 
         if ($record_count > $skipped) {
+
+            $append_attributes = apply_filters('iwp/woocommerce/append_attributes', false);
+            if ($append_attributes) {
+
+                $append_list = [];
+
+                foreach ($attributes as $attribute) {
+                    if (isset($existing_attributes[$attribute->get_name()])) {
+                        $existing_attributes[$attribute->get_name()] = $attribute;
+                    } else {
+                        $append_list[] = $attribute;
+                    }
+                }
+
+                $attributes = array_merge($existing_attributes, $append_list);
+            }
+
             $product->set_attributes($attributes);
         }
 
@@ -1402,30 +1418,6 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         }
 
         return $product_ids;
-
-        // update_post_meta($data['ID'], $key, $product_ids);
-    }
-
-    private function process_related_products($data)
-    {
-        // TODO: work with products that dont exist yet
-        // $ref_key = sprintf('_iwp_wc_%d', JCI()->importer->get_version());
-        // $iwp_wc = maybe_unserialize(get_post_meta(JCI()->importer->get_ID(), $ref_key, true));
-        // $keys = array('_upsell_ids', '_crosssell_ids');
-
-        // if ($iwp_wc) {
-        //     foreach ($keys as $key) {
-        //         $check_key = isset($iwp_wc[$key . '_field_type']) ? $iwp_wc[$key . '_field_type'] : 'ID';
-        //         if (isset($iwp_wc[$key][$data[$check_key]]) && !empty($iwp_wc[$key][$data[$check_key]])) {
-        //             foreach ($iwp_wc[$key][$data[$check_key]] as $product_id) {
-
-        //                 $meta = maybe_unserialize(get_post_meta($product_id, $key, true));
-        //                 $meta[] = $data['ID'];
-        //                 update_post_meta($product_id, $key, $meta);
-        //             }
-        //         }
-        //     }
-        // }
     }
 
     /**
@@ -1551,7 +1543,6 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             '_length' => 'Length',
             '_width' => 'Width',
             '_height' => 'Height',
-            'shipping_class' => 'Shipping Class',
         ];
 
         $field_map = $importer_model->getMap();
@@ -1585,5 +1576,284 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         ];
 
         return $permission_fields;
+    }
+
+    /**
+     * Convert fields/headings to data map
+     * 
+     * @param mixed $fields
+     * @param ImporterModel $importer
+     * @return array 
+     */
+    public function generate_field_map($fields, $importer)
+    {
+        $result = parent::generate_field_map($fields, $importer);
+        $map = $result['map'];
+        $enabled = $result['enabled'];
+
+        $attributes = [];
+
+        foreach ($fields as $index => $field) {
+
+            if (preg_match('/^product_attributes\.(.*?)::(.*?)$/', $field, $matches) === 1) {
+
+                $attribute = $matches[1];
+                if (!isset($attributes[$attribute])) {
+                    $attributes[$attribute] = [
+                        'map' => []
+                    ];
+                }
+
+                $attributes[$attribute]['map'][$matches[2]] = sprintf('{%d}', $index);
+
+                continue;
+            }
+
+            switch ($field) {
+
+                    // product field
+                case 'custom_fields._downloadable':
+                    $map['post._downloadable'] = sprintf('{%d}', $index);
+                    $enabled[] = 'post._downloadable';
+                    break;
+                case 'custom_fields._visibility':
+                    $map['post._visibility'] = sprintf('{%d}', $index);
+                    $enabled[] = 'post._visibility';
+                    break;
+                case 'custom_fields.product_type':
+                    $map['post.product_type'] = sprintf('{%d}', $index);
+                    $enabled[] = 'post.product_type';
+                    break;
+                case 'custom_fields._virtual':
+                    $map['post._virtual'] = sprintf('{%d}', $index);
+                    $enabled[] = 'post._virtual';
+                    break;
+
+                    // price
+                case 'custom_fields._regular_price':
+                    $map['price._regular_price'] = sprintf('{%d}', $index);
+                    break;
+                case 'custom_fields._sale_price':
+                    $map['price.sale._sale_price'] = sprintf('{%d}', $index);
+
+                    if (!in_array('price.sale', $enabled)) {
+                        $enabled[] = 'price.sale';
+                    }
+                    break;
+                case 'custom_fields._sale_price_dates_to':
+                    $map['price.sale._sale_price_dates_to'] = sprintf('{%d}', $index);
+
+                    if (!in_array('price.sale', $enabled)) {
+                        $enabled[] = 'price.sale';
+                    }
+                    break;
+                case 'custom_fields._sale_price_dates_from':
+                    $map['price.sale._sale_price_dates_from'] = sprintf('{%d}', $index);
+
+                    if (!in_array('price.sale', $enabled)) {
+                        $enabled[] = 'price.sale';
+                    }
+                    break;
+
+                    // inventory
+                case 'sku':
+                case 'custom_fields._sku':
+                    $map['inventory._sku'] = sprintf('{%d}', $index);
+                    break;
+                case 'custom_fields._stock_status':
+                    $map['inventory.stock._stock_status'] = sprintf('{%d}', $index);
+
+                    if (!in_array('inventory.stock', $enabled)) {
+                        $enabled[] = 'inventory.stock';
+                    }
+                    break;
+                case 'custom_fields._manage_stock':
+                    $map['inventory.stock._manage_stock'] = sprintf('{%d}', $index);
+
+                    if (!in_array('inventory.stock', $enabled)) {
+                        $enabled[] = 'inventory.stock';
+                    }
+                    break;
+                case 'custom_fields._stock':
+                    $map['inventory.stock._stock'] = sprintf('{%d}', $index);
+
+                    if (!in_array('inventory.stock', $enabled)) {
+                        $enabled[] = 'inventory.stock';
+                    }
+                    break;
+                case 'custom_fields._backorders':
+                    $map['inventory.stock._backorders'] = sprintf('{%d}', $index);
+
+                    if (!in_array('inventory.stock', $enabled)) {
+                        $enabled[] = 'inventory.stock';
+                    }
+                    break;
+                case 'custom_fields._low_stock_amount':
+                    $map['inventory.stock._low_stock_amount'] = sprintf('{%d}', $index);
+
+                    if (!in_array('inventory.stock', $enabled)) {
+                        $enabled[] = 'inventory.stock';
+                    }
+                    break;
+                case 'custom_fields._sold_individually':
+                    $map['inventory.stock._sold_individually'] = sprintf('{%d}', $index);
+
+                    if (!in_array('inventory.stock', $enabled)) {
+                        $enabled[] = 'inventory.stock';
+                    }
+                    break;
+
+                    // shipping
+                case 'woocommerce.weight':
+                case 'custom_fields._weight':
+                    $map['shipping.dimensions._weight'] = sprintf('{%d}', $index);
+
+                    if (!in_array('shipping.dimensions', $enabled)) {
+                        $enabled[] = 'shipping.dimensions';
+                    }
+                    break;
+                case 'woocommerce.length':
+                case 'custom_fields._length':
+                    $map['shipping.dimensions._length'] = sprintf('{%d}', $index);
+
+                    if (!in_array('shipping.dimensions', $enabled)) {
+                        $enabled[] = 'shipping.dimensions';
+                    }
+                    break;
+                case 'woocommerce.width':
+                case 'custom_fields._width':
+                    $map['shipping.dimensions._width'] = sprintf('{%d}', $index);
+
+                    if (!in_array('shipping.dimensions', $enabled)) {
+                        $enabled[] = 'shipping.dimensions';
+                    }
+                    break;
+                case 'woocommerce.height':
+                case 'custom_fields._height':
+                    $map['shipping.dimensions._height'] = sprintf('{%d}', $index);
+
+                    if (!in_array('shipping.dimensions', $enabled)) {
+                        $enabled[] = 'shipping.dimensions';
+                    }
+                    break;
+
+                    // advanced
+                case 'custom_fields._purchase_note':
+                    $map['advanced._purchase_note'] = sprintf('{%d}', $index);
+
+                    if (!in_array('advanced._purchase_note', $enabled)) {
+                        $enabled[] = 'advanced._purchase_note';
+                    }
+                    break;
+                case 'custom_fields._download_limit':
+                    $map['advanced._download_limit'] = sprintf('{%d}', $index);
+
+                    if (!in_array('advanced._download_limit', $enabled)) {
+                        $enabled[] = 'advanced._download_limit';
+                    }
+                    break;
+                case 'custom_fields._download_expiry':
+                    $map['advanced._download_expiry'] = sprintf('{%d}', $index);
+
+                    if (!in_array('advanced._download_expiry', $enabled)) {
+                        $enabled[] = 'advanced._download_expiry';
+                    }
+                    break;
+            }
+        }
+
+        // TODO: product attributes INLINE / GLOBAL (starts with pa_ and taxonomy_exists)
+        $attributes = apply_filters('iwp/woocommerce/generate_field_map/attributes', $attributes, $fields, $importer);
+        if (!empty($attributes)) {
+
+            $attribute_counter = 0;
+            $defaults = [
+                'row_base' => '',
+                'name' => '',
+                'terms' => '',
+                'global' => '',
+                'visible' => '',
+                'append' => '',
+                'variation' => '',
+            ];
+
+            foreach ($attributes as $attribute => $attribute_data) {
+                $data = [];
+
+                if (preg_match('/^pa_(.*?)$/', $attribute, $matches) && taxonomy_exists($attribute)) {
+                    // global
+                    $data['global'] = 'yes';
+                    $data['name'] = $matches[1];
+                } else {
+                    // custom
+                    $data['global'] = 'no';
+                    $data['name'] = $attribute;
+                }
+
+                $data['terms'] = isset($attribute_data['map']['name']) ? $attribute_data['map']['name'] : '';
+                $data['visible'] = isset($attribute_data['map']['visible']) ? $attribute_data['map']['visible'] : '';
+                $data['variation'] = isset($attribute_data['map']['variation']) ? $attribute_data['map']['variation'] : '';
+
+                $data = wp_parse_args($data, $defaults);
+
+                $map = array_merge($map, array_reduce(array_keys($data), function ($carry, $key) use ($data, $attribute_counter) {
+                    $carry[sprintf('attributes.%d.%s', $attribute_counter, $key)] = $data[$key];
+                    return $carry;
+                }, []));
+
+                $attribute_counter++;
+            }
+
+            $map['attributes._index'] = $attribute_counter;
+        }
+
+
+        // TODO: crosssell's
+        // TODO: upsells
+        // TODO: downloads
+        // TODO: product gallery
+
+        return [
+            'map' => $map,
+            'enabled' => $enabled
+        ];
+    }
+
+    public function generate_field_map_remove_wc_custom_fields($custom_fields)
+    {
+
+        foreach ([
+            '_virtual',
+            '_downloadable',
+            '_visibility',
+            'product_type',
+            '_regular_price',
+            '_sale_price',
+            '_sale_price_dates_to',
+            '_sale_price_dates_from',
+            '_sku',
+            '_stock_status',
+            '_manage_stock',
+            '_stock',
+            '_backorders',
+            '_low_stock_amount',
+            '_sold_individually',
+            '_weight',
+            '_length',
+            '_width',
+            '_height',
+            '_purchase_note',
+            '_download_limit',
+            '_download_expiry',
+            '_upsell_ids',
+            '_crosssell_ids',
+            '_price',
+        ] as $key) {
+            if (isset($custom_fields[$key])) {
+                unset($custom_fields[$key]);
+            }
+        }
+
+        return $custom_fields;
     }
 }
