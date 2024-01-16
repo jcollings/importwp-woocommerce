@@ -125,7 +125,7 @@ class ProductMapper extends PostMapper
             'product_type' => $product->get_type(),
             'weight' => $product->get_weight(),
             'length' => $product->get_length(),
-            'width' => $product->get_weight(),
+            'width' => $product->get_width(),
             'height' => $product->get_height(),
         ];
 
