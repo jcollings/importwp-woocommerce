@@ -2,6 +2,7 @@
 
 namespace ImportWPAddon\WooCommerce\Importer\Template;
 
+use Exception;
 use ImportWP\Common\Importer\Exception\MapperException;
 use ImportWP\Common\Importer\ParsedData;
 use ImportWP\Common\Importer\TemplateInterface;
@@ -839,6 +840,12 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         }
     }
 
+    /**
+     * @param \WC_Product_Variation $variation 
+     * @param ParsedData $data 
+     * @return void 
+     * @throws Exception 
+     */
     public function set_variation_data(&$variation, ParsedData $data)
     {
 
@@ -875,7 +882,16 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         $update_parent = false;
 
         if ($record_count > 0) {
-            $parent_attributes = $this->get_variation_parent_attributes($raw_attributes, $parent);
+
+            $parent_attributes = [];
+
+            if (!$parent) {
+                $parent = wc_get_product($variation->get_parent_id());
+            }
+
+            if ($parent) {
+                $parent_attributes = $this->get_variation_parent_attributes($raw_attributes, $parent);
+            }
 
             for ($i = 0; $i < $record_count; $i++) {
 
@@ -965,7 +981,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     $update_parent = true;
                 }
 
-                if ($use_variation !== 'no') {
+                if ($use_variation !== 'no' && $attribute_object) {
 
                     $attribute_key   = sanitize_title($attribute_object->get_name());
                     $attribute_value = is_array($terms) ? $terms[0] : $terms;
@@ -991,7 +1007,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             $variation->set_attributes($attributes);
         }
 
-        if ($update_parent) {
+        if ($parent && $update_parent) {
             $parent->set_attributes($parent_attributes);
             $parent->save();
         }
