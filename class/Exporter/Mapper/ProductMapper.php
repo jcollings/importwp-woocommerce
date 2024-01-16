@@ -29,7 +29,11 @@ class ProductMapper extends PostMapper
             'label' => 'WooCommerce Product',
             'loop' => false,
             'fields' => [
-                'product_type'
+                'product_type',
+                'weight',
+                'length',
+                'width',
+                'height',
             ],
             'children' => []
         ];
@@ -41,6 +45,19 @@ class ProductMapper extends PostMapper
         $custom_attribute_rows = $wpdb->get_col("SELECT DISTINCT meta_value FROM {$wpdb->postmeta} WHERE meta_key='_product_attributes' AND meta_value LIKE '%\"is_taxonomy\";i:0;%'");
 
         $tmp = [];
+
+
+        // Fetch all non custom attributes
+        $attribute_taxonomies = wc_get_attribute_taxonomy_names();
+
+        if (!empty($attribute_taxonomies)) {
+            foreach ($attribute_taxonomies as $attribute_tax) {
+                $tmp[] = sprintf('%s::name', $attribute_tax);
+                $tmp[] = sprintf('%s::visible', $attribute_tax);
+                $tmp[] = sprintf('%s::variation', $attribute_tax);
+            }
+        }
+
         if (!empty($custom_attribute_rows)) {
             foreach ($custom_attribute_rows as $row) {
                 $data = maybe_unserialize($row);
@@ -105,17 +122,26 @@ class ProductMapper extends PostMapper
 
         // product fields
         $this->record['woocommerce'] = [
-            'product_type' => $product->get_type()
+            'product_type' => $product->get_type(),
+            'weight' => $product->get_weight(),
+            'length' => $product->get_length(),
+            'width' => $product->get_width(),
+            'height' => $product->get_height(),
         ];
 
         // core product sku, added here to show in unique identifier field
         $this->record['sku'] = $product->get_sku();
 
         // extra parent fields
-        $this->record['parent']['sku'] = get_post_meta($this->record['parent']['id'], '_sku', true);
+        $this->record['parent']['sku'] = '';
+        if ($this->record['post_parent'] > 0) {
+            $this->record['parent']['sku'] = get_post_meta($this->record['post_parent'], '_sku', true);
+        }
 
         // Product attributes
         $this->record['product_attributes'] = [];
+
+        $tmp = [];
         $attributes = $product->get_attributes();
         foreach ($attributes as $attribute_id => $attribute_data) {
 
@@ -124,11 +150,42 @@ class ProductMapper extends PostMapper
              */
 
             if ($attribute_data instanceof \WC_Product_Attribute) {
-                $this->record['product_attributes'][$attribute_id] = $attribute_data->get_options();
+
+                // returns int[]
+                // $tmp[$attribute_id] = $attribute_data->get_options();
+
+                // $tmp[$attribute_id] = [
+                $tmp[sprintf('%s::name', $attribute_id)] = '';
+                $tmp[sprintf('%s::visible', $attribute_id)] = $attribute_data->get_visible() ? 'yes' : 'no';
+                $tmp[sprintf('%s::variation', $attribute_id)] = $attribute_data->get_variation() ? 'yes' : 'no';
+                // 'visible' => $attribute_data->get_visible() ? 'yes' : 'no',
+                // 'variation' => $attribute_data->get_variation() ? 'yes' : 'no',
+                // ];
+
+                $term_ids = $attribute_data->get_options();
+
+                if (!empty($term_ids)) {
+
+                    if (taxonomy_exists($attribute_id)) {
+
+                        foreach ($term_ids as $term_id) {
+                            $term = get_term_by('term_id', $term_id, $attribute_id);
+                            if (!$term) {
+                                continue;
+                            }
+
+                            $tmp[sprintf('%s::name', $attribute_id)] = $term->name;
+                        }
+                    } else {
+                        $tmp[sprintf('%s::name', $attribute_id)] = $term_ids;
+                    }
+                }
             } else {
-                $this->record['product_attributes'][$attribute_id] = $attribute_data;
+                $tmp[sprintf('%s::name', $attribute_id)] = $attribute_data;
             }
         }
+
+        $this->record['product_attributes'] = $tmp;
 
         // Linked Products
         $this->record['linked_products'] = [];

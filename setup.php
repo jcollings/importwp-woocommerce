@@ -72,3 +72,17 @@ function iwp_woocommerce_mapper_unique_fields($unique_fields, $mapper_id)
     return $unique_fields;
 }
 add_filter('iwp/mapper/unique_fields', 'iwp_woocommerce_mapper_unique_fields', 10, 2);
+
+/**
+ * Add WooCommerce plugin to compatability whitelist
+ * 
+ * @param string[] $plugins 
+ * @return string[] 
+ */
+function iwp_woocommerce_compat_whitelist($plugins)
+{
+    $plugins[] = 'woocommerce/woocommerce.php';
+    return $plugins;
+}
+
+add_filter('iwp/compat/whitelist', 'iwp_woocommerce_compat_whitelist');
