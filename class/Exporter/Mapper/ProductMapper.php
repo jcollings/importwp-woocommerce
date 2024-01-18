@@ -9,6 +9,8 @@ class ProductMapper extends PostMapper
     public function __construct($post_type = 'post')
     {
         parent::__construct($post_type);
+
+        add_filter('iwp/exporter/post_type/custom_field_list',  [$this, 'remove_custom_fields'], 10, 2);
     }
 
     public function get_fields()
@@ -254,5 +256,55 @@ class ProductMapper extends PostMapper
         }
 
         return $tmp;
+    }
+
+    /**
+     * Remove WooCommerce fields from custom field list
+     * 
+     * @param string[] $fields 
+     * @param string[] $post_types 
+     * @return string[] 
+     */
+    public function remove_custom_fields($fields, $post_types)
+    {
+
+        if ($post_types !== $this->post_type) {
+            return $fields;
+        }
+
+        $cf_fields_to_remove = [
+            'total_sales',
+            '_tax_status',
+            '_tax_class',
+            '_manage_stock',
+            '_backorders',
+            '_sold_individually',
+            '_virtual',
+            '_downloadable',
+            '_download_limit',
+            '_download_expiry',
+            '_stock',
+            '_stock_status',
+            '_wc_average_rating',
+            '_wc_review_count',
+            '_product_version',
+            'downloads',
+            '_downloads',
+            '_sku',
+            '_regular_price',
+            '_product_image_gallery',
+            '_price',
+            '_children',
+            '_product_url',
+            '_product_attributes',
+            '_variation_description',
+            'attribute_pa_colour',
+        ];
+
+        $fields = array_filter($fields, function ($item) use ($cf_fields_to_remove) {
+            return !in_array($item, $cf_fields_to_remove);
+        });
+
+        return $fields;
     }
 }
