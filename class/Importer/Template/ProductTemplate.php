@@ -2,7 +2,6 @@
 
 namespace ImportWPAddon\WooCommerce\Importer\Template;
 
-use Exception;
 use ImportWP\Common\Importer\Exception\MapperException;
 use ImportWP\Common\Importer\ParsedData;
 use ImportWP\Common\Importer\TemplateInterface;
@@ -260,7 +259,13 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 'options' => $yes_no,
                 'default' => ''
             ]),
-        ], ['type' => 'repeatable']);
+        ], ['type' => 'repeatable', 'settings' => [
+            $this->register_field('Keep existing Product Attributes.', 'append_attributes', [
+                'type' => 'toggle',
+                'default' => 'no',
+                'tooltip' => __('If enabled attributes will be appended onto existing attribute list.')
+            ])
+        ]]);
         $groups[] = $this->register_group('Advanced', 'advanced', [
             $this->register_group('Parent Settings', '_parent', [
                 $this->register_field('Parent', 'parent', [
@@ -1017,7 +1022,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
      * @param \WC_Product $product
      * @param ParsedData $data
      *
-     * @throws Exception
+     * @throws \Exception
      */
     public function set_product_data(&$product, $data)
     {
@@ -1067,6 +1072,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         }
 
         $raw_attributes = $data->getData('attributes');
+        $append_attributes = isset($raw_attributes['attributes._iwp_settings.append_attributes']) && $raw_attributes['attributes._iwp_settings.append_attributes'] == 'yes';
         $record_count = intval($raw_attributes['attributes._index']);
 
         $attributes          = [];
@@ -1214,7 +1220,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
         if ($record_count > $skipped) {
 
-            $append_attributes = apply_filters('iwp/woocommerce/append_attributes', false);
+            $append_attributes = apply_filters('iwp/woocommerce/append_attributes', $append_attributes);
             if ($append_attributes) {
 
                 $append_list = [];
@@ -1246,7 +1252,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
      * @param WC_Product $parent Parent product data.
      *
      * @return array
-     * @throws Exception
+     * @throws \Exception
      */
     protected function get_variation_parent_attributes($raw_attributes, $parent)
     {
@@ -1301,7 +1307,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
      *
      * @param  string $raw_name Attribute name.
      * @return int
-     * @throws Exception If taxonomy cannot be loaded.
+     * @throws \Exception If taxonomy cannot be loaded.
      */
     public function get_attribute_taxonomy_id($raw_name)
     {
