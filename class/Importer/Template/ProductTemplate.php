@@ -1609,11 +1609,19 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
      */
     public function generate_field_map($fields, $importer)
     {
+        // Filter stops the enable field of posts showing parent by mistake.
+        // due to parent being moved to advanced section
+        add_filter('iwp/importer/generate_field_map/parent', '__return_empty_array');
+
         $result = parent::generate_field_map($fields, $importer);
+
+        remove_filter('iwp/importer/generate_field_map/parent', '__return_empty_array');
+
         $map = $result['map'];
         $enabled = $result['enabled'];
 
         $attributes = [];
+        $parent = [];
 
         foreach ($fields as $index => $field) {
 
@@ -1629,6 +1637,15 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $attributes[$attribute]['map'][$matches[2]] = sprintf('{%d}', $index);
 
                 continue;
+            } elseif (preg_match('/^parent\.(.*?)$/', $field, $matches) === 1) {
+
+                // Capture parent
+                // parent.id,parent.name,parent.slug
+                if (!isset($parent['map'])) {
+                    $parent['map'] = [];
+                }
+
+                $parent['map'][$matches[1]] = sprintf('{%d}', $index);
             }
 
             switch ($field) {
@@ -1637,21 +1654,25 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 case 'custom_fields._downloadable':
                 case 'woocommerce.downloadable':
                     $map['post._downloadable'] = sprintf('{%d}', $index);
+                    $map['post._downloadable._enable_text'] = 'yes';
                     $enabled[] = 'post._downloadable';
                     break;
                 case 'custom_fields._visibility':
                 case 'woocommerce.visibility':
                     $map['post._visibility'] = sprintf('{%d}', $index);
+                    $map['post._visibility._enable_text'] = 'yes';
                     $enabled[] = 'post._visibility';
                     break;
                 case 'custom_fields.product_type':
                 case 'woocommerce.product_type':
                     $map['post.product_type'] = sprintf('{%d}', $index);
+                    $map['post.product_type._enable_text'] = 'yes';
                     $enabled[] = 'post.product_type';
                     break;
                 case 'custom_fields._virtual':
                 case 'woocommerce.virtual':
                     $map['post._virtual'] = sprintf('{%d}', $index);
+                    $map['post._virtual._enable_text'] = 'yes';
                     $enabled[] = 'post._virtual';
                     break;
 
@@ -1693,6 +1714,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 case 'custom_fields._stock_status':
                 case 'woocommerce.stock_status':
                     $map['inventory.stock._stock_status'] = sprintf('{%d}', $index);
+                    $map['inventory.stock._stock_status._enable_text'] = 'yes';
 
                     if (!in_array('inventory.stock', $enabled)) {
                         $enabled[] = 'inventory.stock';
@@ -1701,6 +1723,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 case 'custom_fields._manage_stock':
                 case 'woocommerce.manage_stock':
                     $map['inventory.stock._manage_stock'] = sprintf('{%d}', $index);
+                    $map['inventory.stock._manage_stock._enable_text'] = 'yes';
 
                     if (!in_array('inventory.stock', $enabled)) {
                         $enabled[] = 'inventory.stock';
@@ -1717,6 +1740,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 case 'custom_fields._backorders':
                 case 'woocommerce.backorders':
                     $map['inventory.stock._backorders'] = sprintf('{%d}', $index);
+                    $map['inventory.stock._backorders._enable_text'] = 'yes';
 
                     if (!in_array('inventory.stock', $enabled)) {
                         $enabled[] = 'inventory.stock';
@@ -1733,6 +1757,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 case 'custom_fields._sold_individually':
                 case 'woocommerce.sold_individually':
                     $map['inventory.stock._sold_individually'] = sprintf('{%d}', $index);
+                    $map['inventory.stock._sold_individually._enable_text'] = 'yes';
 
                     if (!in_array('inventory.stock', $enabled)) {
                         $enabled[] = 'inventory.stock';
@@ -1868,6 +1893,37 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             }
 
             $map['attributes._index'] = $attribute_counter;
+        }
+
+        if (!empty($parent)) {
+
+            // parent.id,parent.name,parent.slug
+            $enabled_key = 'advanced._parent';
+            if (isset($parent['map']['sku'])) {
+
+                $enabled[] = $enabled_key;
+                $map['advanced._parent.parent'] = $parent['map']['sku'];
+                $map['advanced._parent.parent._enable_text'] = 'yes';
+                $map['advanced._parent._parent_type'] = 'sku';
+            } elseif (isset($parent['map']['sku'])) {
+
+                $enabled[] = $enabled_key;
+                $map['advanced._parent.parent'] = $parent['map']['name'];
+                $map['advanced._parent.parent._enable_text'] = 'yes';
+                $map['advanced._parent._parent_type'] = 'name';
+            } elseif (isset($parent['map']['slug'])) {
+
+                $enabled[] = $enabled_key;
+                $map['advanced._parent.parent'] = $parent['map']['slug'];
+                $map['advanced._parent.parent._enable_text'] = 'yes';
+                $map['advanced._parent._parent_type'] = 'slug';
+            } elseif (isset($parent['map']['id'])) {
+
+                $enabled[] = $enabled_key;
+                $map['advanced._parent.parent'] = $parent['map']['name'];
+                $map['advanced._parent.parent._enable_text'] = 'yes';
+                $map['advanced._parent._parent_type'] = 'id';
+            }
         }
 
 
