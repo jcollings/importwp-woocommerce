@@ -1635,27 +1635,33 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
                     // product field
                 case 'custom_fields._downloadable':
+                case 'woocommerce.downloadable':
                     $map['post._downloadable'] = sprintf('{%d}', $index);
                     $enabled[] = 'post._downloadable';
                     break;
                 case 'custom_fields._visibility':
+                case 'woocommerce.visibility':
                     $map['post._visibility'] = sprintf('{%d}', $index);
                     $enabled[] = 'post._visibility';
                     break;
                 case 'custom_fields.product_type':
+                case 'woocommerce.product_type':
                     $map['post.product_type'] = sprintf('{%d}', $index);
                     $enabled[] = 'post.product_type';
                     break;
                 case 'custom_fields._virtual':
+                case 'woocommerce.virtual':
                     $map['post._virtual'] = sprintf('{%d}', $index);
                     $enabled[] = 'post._virtual';
                     break;
 
                     // price
                 case 'custom_fields._regular_price':
+                case 'woocommerce.regular_price':
                     $map['price._regular_price'] = sprintf('{%d}', $index);
                     break;
                 case 'custom_fields._sale_price':
+                case 'woocommerce.sale_price':
                     $map['price.sale._sale_price'] = sprintf('{%d}', $index);
 
                     if (!in_array('price.sale', $enabled)) {
@@ -1663,6 +1669,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                     break;
                 case 'custom_fields._sale_price_dates_to':
+                case 'woocommerce.date_on_sale_to':
                     $map['price.sale._sale_price_dates_to'] = sprintf('{%d}', $index);
 
                     if (!in_array('price.sale', $enabled)) {
@@ -1670,6 +1677,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                     break;
                 case 'custom_fields._sale_price_dates_from':
+                case 'woocommerce.date_on_sale_from':
                     $map['price.sale._sale_price_dates_from'] = sprintf('{%d}', $index);
 
                     if (!in_array('price.sale', $enabled)) {
@@ -1683,6 +1691,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     $map['inventory._sku'] = sprintf('{%d}', $index);
                     break;
                 case 'custom_fields._stock_status':
+                case 'woocommerce.stock_status':
                     $map['inventory.stock._stock_status'] = sprintf('{%d}', $index);
 
                     if (!in_array('inventory.stock', $enabled)) {
@@ -1690,6 +1699,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                     break;
                 case 'custom_fields._manage_stock':
+                case 'woocommerce.manage_stock':
                     $map['inventory.stock._manage_stock'] = sprintf('{%d}', $index);
 
                     if (!in_array('inventory.stock', $enabled)) {
@@ -1697,6 +1707,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                     break;
                 case 'custom_fields._stock':
+                case 'woocommerce.stock':
                     $map['inventory.stock._stock'] = sprintf('{%d}', $index);
 
                     if (!in_array('inventory.stock', $enabled)) {
@@ -1704,6 +1715,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                     break;
                 case 'custom_fields._backorders':
+                case 'woocommerce.backorders':
                     $map['inventory.stock._backorders'] = sprintf('{%d}', $index);
 
                     if (!in_array('inventory.stock', $enabled)) {
@@ -1711,6 +1723,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                     break;
                 case 'custom_fields._low_stock_amount':
+                case 'woocommerce.low_stock_amount':
                     $map['inventory.stock._low_stock_amount'] = sprintf('{%d}', $index);
 
                     if (!in_array('inventory.stock', $enabled)) {
@@ -1718,6 +1731,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                     break;
                 case 'custom_fields._sold_individually':
+                case 'woocommerce.sold_individually':
                     $map['inventory.stock._sold_individually'] = sprintf('{%d}', $index);
 
                     if (!in_array('inventory.stock', $enabled)) {
@@ -1761,6 +1775,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
                     // advanced
                 case 'custom_fields._purchase_note':
+                case 'woocommerce.purchase_note':
                     $map['advanced._purchase_note'] = sprintf('{%d}', $index);
 
                     if (!in_array('advanced._purchase_note', $enabled)) {
@@ -1768,6 +1783,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                     break;
                 case 'custom_fields._download_limit':
+                case 'woocommerce.download_limit':
                     $map['advanced._download_limit'] = sprintf('{%d}', $index);
 
                     if (!in_array('advanced._download_limit', $enabled)) {
@@ -1775,10 +1791,27 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                     break;
                 case 'custom_fields._download_expiry':
+                case 'woocommerce.download_expiry':
                     $map['advanced._download_expiry'] = sprintf('{%d}', $index);
 
                     if (!in_array('advanced._download_expiry', $enabled)) {
                         $enabled[] = 'advanced._download_expiry';
+                    }
+                    break;
+                case 'custom_fields._product_url':
+                case 'woocommerce.product_url':
+                    $map['post.external._product_url'] = sprintf('{%d}', $index);
+
+                    if (!in_array('post.external', $enabled)) {
+                        $enabled[] = 'post.external';
+                    }
+                    break;
+                case 'custom_fields._button_text':
+                case 'woocommerce.button_text':
+                    $map['post.external._button_text'] = sprintf('{%d}', $index);
+
+                    if (!in_array('post.external', $enabled)) {
+                        $enabled[] = 'post.external';
                     }
                     break;
             }
