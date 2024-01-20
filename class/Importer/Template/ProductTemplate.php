@@ -220,7 +220,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         $linked_products_field_type = $this->register_field('Type', '_field_type', [
             'options' => [
                 ['value' => 'ID', 'label' => 'Product ID'],
-                ['value' => '_sku', 'label' => 'Product SKU']
+                ['value' => '_sku', 'label' => 'Product SKU'],
+                ['value' => 'name', 'label' => 'Product Name'],
+                ['value' => 'slug', 'label' => 'Product Slug'],
             ],
             'default' => 'ID'
         ]);
@@ -372,20 +374,20 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             $parent_id = 0;
             $parent_field_type = $data->getValue('advanced._parent._parent_type', 'advanced');
 
-            if ($parent_field_type === 'name' || $parent_field_type === 'slug') {
+            if ($parent_field_type === 'name') {
 
-                // name or slug
-                $page = get_posts([
-                    'name' => sanitize_title($post_parent_value),
-                    'post_type' => $this->importer->getSetting('post_type'),
-                    'post_status' => 'any, trash, future'
-                ]);
-                if ($page) {
-                    $parent_id = intval($page[0]->ID);
+                $temp_id = $this->get_product_id_by_name($post_parent_value);
+                if (intval($temp_id > 0)) {
+                    $parent_id = intval($temp_id);
+                }
+            } elseif ($parent_field_type === 'slug') {
+
+                $temp_id = $this->get_product_id_by_slug($post_parent_value);
+                if (intval($temp_id > 0)) {
+                    $parent_id = intval($temp_id);
                 }
             } elseif ($parent_field_type === 'id') {
 
-                // ID
                 $parent_id = intval($post_parent_value);
             } elseif ($parent_field_type === 'sku') {
                 $temp_id = $this->get_product_id_by_sku($post_parent_value);
@@ -1428,6 +1430,10 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
                     //     $iwp_wc[$key][$trimmed_sku][] = $data['ID'];
                     // }
+                } elseif ($type === 'name') {
+                    $id = intval($this->get_product_id_by_name($trimmed_sku));
+                } elseif ($type === 'slug') {
+                    $id = intval($this->get_product_id_by_slug($trimmed_sku));
                 }
 
                 if ($id > 0 && !in_array($id, $product_ids, true)) {
@@ -1452,23 +1458,82 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         return $this->_taxonomies;
     }
 
-    private function get_product_id_by_sku($sku)
+    public function get_product_id_by_sku($sku)
     {
+        return $this->get_product_id_by_field('sku', $sku);
+    }
 
-        $query = new \WP_Query(array(
-            'post_type'      => 'product',
+    public function get_product_id_by_name($name)
+    {
+        return $this->get_product_id_by_field('name', $name);
+    }
+
+    public function get_product_id_by_slug($slug)
+    {
+        return $this->get_product_id_by_field('slug', $slug);
+    }
+
+    public function get_product_id_by_field($field, $value)
+    {
+        if (empty($value) || empty($field)) {
+            return false;
+        }
+
+        $query_args = array(
+            'post_type'      => $this->importer->getSetting('post_type'),
             'posts_per_page' => 1,
             'fields'         => 'ids',
             'cache_results' => false,
             'update_post_meta_cache' => false,
-            'meta_query'     => array(
-                array(
-                    'key'   => '_sku',
-                    'value' => $sku
-                )
-            ),
             'post_status' => 'any, trash, future'
-        ));
+        );
+
+        switch ($field) {
+            case 'sku':
+                $query_args['meta_query'] = array(
+                    array(
+                        'key'   => '_sku',
+                        'value' => $value
+                    )
+                );
+                break;
+            case 'meta':
+
+                if (!is_array($value)) {
+                    return false;
+                }
+
+                $meta_query_args = [];
+
+                foreach ($value as $meta_key => $meta_value) {
+
+                    if (empty($meta_key) || empty($meta_value)) {
+                        continue;
+                    }
+
+                    $meta_query_args[] = array(
+                        'key'   => $meta_key,
+                        'value' => $meta_value
+                    );
+                }
+
+                if (empty($meta_query_args)) {
+                    return false;
+                }
+
+                $query_args['meta_query'] = $meta_query_args;
+                break;
+            case 'name':
+                $query_args['post_title'] = $value;
+                break;
+            case 'slug':
+                $query_args['name'] = $value;
+                break;
+            default:
+                return false;
+        }
+
+        $query = new \WP_Query($query_args);
 
         if ($query->have_posts()) {
             return $query->posts[0];
@@ -1622,6 +1687,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
         $attributes = [];
         $parent = [];
+        $attachments = [];
+        $linked_products = [];
+        $downloadable_files = [];
 
         foreach ($fields as $index => $field) {
 
@@ -1646,7 +1714,45 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 }
 
                 $parent['map'][$matches[1]] = sprintf('{%d}', $index);
+                continue;
+            } elseif (preg_match('/^product_gallery\.(.*?)$/', $field, $matches) === 1) {
+
+                // Capture featured image.
+                // image.id,url, title, alt, caption, description
+                if (!isset($attachments['product_gallery'])) {
+                    $attachments['product_gallery'] = [
+                        'map' => []
+                    ];
+                }
+
+                $attachments['product_gallery']['map'][$matches[1]] = sprintf('{%d}', $index);
+                $attachments['product_gallery']['map']['featured'] = 'yes';
+
+                continue;
+            } elseif (preg_match('/^linked_products\.(.*?)::(.*?)$/', $field, $matches) === 1) {
+
+                // Capture featured image.
+                // image.id,url, title, alt, caption, description
+                if (!isset($linked_products[$matches[1]])) {
+                    $linked_products[$matches[1]] = [
+                        'map' => []
+                    ];
+                }
+
+                $linked_products[$matches[1]]['map'][$matches[2]] = sprintf('{%d}', $index);
+
+                continue;
+            } elseif (preg_match('/^downloadable_files\.(.*?)$/', $field, $matches) === 1) {
+
+                // downloadable_files
+                if (!isset($downloadable_files['map'])) {
+                    $downloadable_files['map'] = [];
+                }
+
+                $downloadable_files['map'][$matches[1]] = sprintf('{%d}', $index);
+                continue;
             }
+
 
             switch ($field) {
 
@@ -1895,6 +2001,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             $map['attributes._index'] = $attribute_counter;
         }
 
+        // Parent
         if (!empty($parent)) {
 
             // parent.id,parent.name,parent.slug
@@ -1926,16 +2033,129 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             }
         }
 
+        // Linked Products
+        if (!empty($linked_products)) {
 
-        // TODO: crosssell's
-        // TODO: upsells
-        // TODO: downloads
-        // TODO: product gallery
+            list($map, $enabled) = $this->generate_linked_products_field_map('crosssell', $map, $enabled, $linked_products);
+            list($map, $enabled) = $this->generate_linked_products_field_map('upsell', $map, $enabled, $linked_products);
+            list($map, $enabled) = $this->generate_linked_products_field_map('grouped', $map, $enabled, $linked_products);
+        }
+
+        // product gallery
+        if (!empty($attachments)) {
+            $attachment_counter = 0;
+            $defaults = [
+                'row_base' => '',
+                'location' => '',
+                'settings._delimiter' => '',
+                'settings._download' => 'remote',
+                'settings._enable_image_hash' => 'yes',
+                'settings._featured' => 'no',
+                'settings._ftp_host' => '',
+                'settings._ftp_pass' => '',
+                'settings._ftp_path' => '',
+                'settings._ftp_user' => '',
+                'settings._local_url' => '',
+                'settings._meta._alt' => '',
+                'settings._meta._caption' => '',
+                'settings._meta._description' => '',
+                'settings._meta._enabled' => 'no',
+                'settings._meta._title' => '',
+                'settings._remote_url' => '',
+            ];
+
+            foreach ($attachments as $attachment_data) {
+
+                $data = [];
+
+                if (!isset($attachment_data['map']['url'])) {
+                    continue;
+                }
+
+                // location
+                $data['location'] = $attachment_data['map']['url'];
+
+                if (isset($attachment_data['map']['featured'])) {
+                    $data['settings._featured'] = $attachment_data['map']['featured'];
+                }
+
+                // Meta
+                if (isset($attachment_data['map']['title'])) {
+                    $data['settings._meta._title'] = $attachment_data['map']['title'];
+                    $data['settings._meta._enabled'] = 'yes';
+                }
+                if (isset($attachment_data['map']['alt'])) {
+                    $data['settings._meta._alt'] = $attachment_data['map']['alt'];
+                    $data['settings._meta._enabled'] = 'yes';
+                }
+                if (isset($attachment_data['map']['description'])) {
+                    $data['settings._meta._description'] = $attachment_data['map']['description'];
+                    $data['settings._meta._enabled'] = 'yes';
+                }
+                if (isset($attachment_data['map']['caption'])) {
+                    $data['settings._meta._caption'] = $attachment_data['map']['caption'];
+                    $data['settings._meta._enabled'] = 'yes';
+                }
+
+                $data = wp_parse_args($data, $defaults);
+
+                $map = array_merge($map, array_reduce(array_keys($data), function ($carry, $key) use ($data, $attachment_counter) {
+                    $carry[sprintf('product_gallery.%d.%s', $attachment_counter, $key)] = $data[$key];
+                    return $carry;
+                }, []));
+
+                $attachment_counter++;
+            }
+
+            $map['product_gallery._index'] = $attachment_counter;
+        }
+
+        // Product downlaods
+        if (!empty($downloadable_files)) {
+
+            if (isset($downloadable_files['map']['name'])) {
+                $map['downloads.0.name'] = $downloadable_files['map']['name'];
+            }
+            if (isset($downloadable_files['map']['file'])) {
+                $map['downloads.0.file'] = $downloadable_files['map']['file'];
+            }
+
+            $map['downloads._index'] = 1;
+        }
 
         return [
             'map' => $map,
             'enabled' => $enabled
         ];
+    }
+
+    public function generate_linked_products_field_map($field, $map, $enabled, $linked_products)
+    {
+        if (!isset($linked_products[$field])) {
+            return [$map, $enabled];
+        }
+
+        if (isset($linked_products[$field]['map']['sku'])) {
+            $map[sprintf('linked-products.%s._field_type', $field)] = '_sku';
+            $map[sprintf('linked-products.%s.products', $field)] = $linked_products[$field]['map']['sku'];
+            // $map[sprintf('linked-products.%s._field_type._enable_text', $field)] = 'yes';
+        } elseif (isset($linked_products[$field]['map']['name'])) {
+            $map[sprintf('linked-products.%s._field_type', $field)] = 'name';
+            $map[sprintf('linked-products.%s.products', $field)] = $linked_products[$field]['map']['name'];
+            // $map[sprintf('linked-products.%s._field_type._enable_text', $field)] = 'yes';
+        } elseif (isset($linked_products[$field]['map']['slug'])) {
+            $map[sprintf('linked-products.%s._field_type', $field)] = 'slug';
+            $map[sprintf('linked-products.%s.products', $field)] = $linked_products[$field]['map']['slug'];
+            // $map[sprintf('linked-products.%s._field_type._enable_text', $field)] = 'yes';
+        } elseif (isset($linked_products[$field]['map']['id'])) {
+            $map[sprintf('linked-products.%s._field_type', $field)] = 'id';
+            $map[sprintf('linked-products.%s.products', $field)] = $linked_products[$field]['map']['id'];
+            // $map[sprintf('linked-products.%s._field_type._enable_text', $field)] = 'yes';
+        }
+
+        $enabled[] = sprintf('linked-products.%s', $field);
+
+        return [$map, $enabled];
     }
 
     public function generate_field_map_remove_wc_custom_fields($custom_fields)

@@ -113,14 +113,14 @@ class ProductMapper extends PostMapper
                 'grouped::name',
                 'grouped::slug',
                 'grouped::sku',
-                'upsells::id',
-                'upsells::name',
-                'upsells::slug',
-                'upsells::sku',
-                'crosssells::id',
-                'crosssells::name',
-                'crosssells::slug',
-                'crosssells::sku',
+                'upsell::id',
+                'upsell::name',
+                'upsell::slug',
+                'upsell::sku',
+                'crosssell::id',
+                'crosssell::name',
+                'crosssell::slug',
+                'crosssell::sku',
             ],
             'children' => []
         ];
@@ -272,12 +272,12 @@ class ProductMapper extends PostMapper
 
         $this->record['linked_products'] = array_merge(
             $this->record['linked_products'],
-            $this->get_linked_product_data($product->get_upsell_ids(), 'upsells')
+            $this->get_linked_product_data($product->get_upsell_ids(), 'upsell')
         );
 
         $this->record['linked_products'] = array_merge(
             $this->record['linked_products'],
-            $this->get_linked_product_data($product->get_cross_sell_ids(), 'crosssells')
+            $this->get_linked_product_data($product->get_cross_sell_ids(), 'crosssell')
         );
 
         // Product Gallery

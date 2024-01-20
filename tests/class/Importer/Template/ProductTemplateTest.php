@@ -215,4 +215,18 @@ class ProductTemplateTest extends \WP_UnitTestCase
         $this->assertEquals(['sm'], $variation_attributes['pa_size']);
         $this->assertCount(2, $variation_attributes);
     }
+
+    public function test_get_product_id_by_field()
+    {
+    }
+
+    public function test_get_product_id_by_sku()
+    {
+    }
+    public function test_get_product_id_by_name()
+    {
+    }
+    public function test_get_product_id_by_slug()
+    {
+    }
 }
