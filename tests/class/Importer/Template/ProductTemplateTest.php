@@ -3,11 +3,15 @@
 namespace ImportWPAddonTests\WooCommerce\Importer\Template;
 
 use ImportWP\Common\Importer\ParsedData;
+use ImportWP\Common\Model\ImporterModel;
 use ImportWP\EventHandler;
 use ImportWPAddon\WooCommerce\Importer\Template\ProductTemplate;
+use ImportWPAddonTests\WooCommerce\Utils\ProtectedPropertyTrait;
 
 class ProductTemplateTest extends \WP_UnitTestCase
 {
+    use ProtectedPropertyTrait;
+
     /**
      * @var \WC_Product[]
      */
@@ -218,6 +222,56 @@ class ProductTemplateTest extends \WP_UnitTestCase
 
     public function test_get_product_id_by_field()
     {
+        $product_template_mock = $this->createPartialMock(ProductTemplate::class, []);
+
+        $importer_model_mock = $this->createMock(ImporterModel::class);
+        $importer_model_mock->method('getSetting')->will($this->returnValue(['product', 'product_variation']));
+
+        $this->setProtectedProperty($product_template_mock, 'importer', $importer_model_mock);
+
+        // Make sure empty results
+        $this->assertFalse($product_template_mock->get_product_id_by_field('sku', 'test-one'));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('sku', 'test-two'));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('sku', 'test-three'));
+
+        $product_one = $this->mock_product('simple');
+        $product_one->set_name('Test One');
+        $product_one->set_slug('slug-one');
+        $product_one->set_sku('test-one');
+        $product_one->save();
+
+        $product_two = $this->mock_product('simple');
+        $product_two->set_name('Test Two');
+        $product_two->set_slug('slug-two');
+        $product_two->set_sku('test-two');
+        $product_two->save();
+
+        //  sku
+        $this->assertEquals($product_one->get_id(), $product_template_mock->get_product_id_by_field('sku', 'test-one'));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('sku', $product_one->get_name()));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('sku', $product_one->get_slug()));
+
+        $this->assertEquals($product_two->get_id(), $product_template_mock->get_product_id_by_field('sku', 'test-two'));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('sku', $product_two->get_name()));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('sku', $product_two->get_slug()));
+
+        //  name
+        $this->assertEquals($product_one->get_id(), $product_template_mock->get_product_id_by_field('name', 'Test One'));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('name', $product_one->get_slug()));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('name', $product_one->get_sku()));
+
+        $this->assertEquals($product_two->get_id(), $product_template_mock->get_product_id_by_field('name', 'Test Two'));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('name', $product_two->get_slug()));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('name', $product_two->get_sku()));
+
+        //  slug
+        $this->assertEquals($product_one->get_id(), $product_template_mock->get_product_id_by_field('slug', 'slug-one'));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('sku', $product_one->get_name()));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('name', $product_one->get_sku()));
+
+        $this->assertEquals($product_two->get_id(), $product_template_mock->get_product_id_by_field('slug', 'slug-two'));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('sku', $product_two->get_name()));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('name', $product_two->get_sku()));
     }
 
     public function test_get_product_id_by_sku()

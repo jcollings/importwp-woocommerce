@@ -1524,7 +1524,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $query_args['meta_query'] = $meta_query_args;
                 break;
             case 'name':
-                $query_args['post_title'] = $value;
+                $query_args['title'] = $value;
                 break;
             case 'slug':
                 $query_args['name'] = $value;
