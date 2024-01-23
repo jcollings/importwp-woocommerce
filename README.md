@@ -1,6 +1,6 @@
 # WooCommerce Product Importer
 
-Requires Import WP: 2.5.0
+Requires Import WP: 2.11.6
 
 **Version: __STABLE_TAG__**
 
@@ -51,6 +51,13 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 ## Screenshots
 
 ## Changelog
+
+### 2.3.2
+
+- FIX - Fix updater script to get rid of php warning message.
+- ADD - Add new option to allow the ability to append product attributes instead of clearing previous.
+- ADD - Update exporter to export all core WooCommerce product types.
+- ADD - Auto populate field map in importer when using a default export file.
 
 ### 2.3.1
 
