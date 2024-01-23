@@ -272,15 +272,67 @@ class ProductTemplateTest extends \WP_UnitTestCase
         $this->assertEquals($product_two->get_id(), $product_template_mock->get_product_id_by_field('slug', 'slug-two'));
         $this->assertFalse($product_template_mock->get_product_id_by_field('sku', $product_two->get_name()));
         $this->assertFalse($product_template_mock->get_product_id_by_field('name', $product_two->get_sku()));
+
+        // meta
+        $this->assertEquals($product_one->get_id(), $product_template_mock->get_product_id_by_field('meta', ['_sku' => $product_one->get_sku()]));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('meta', ['_sku' => $product_one->get_name()]));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('meta', ['_sku' => $product_one->get_slug()]));
+
+        $this->assertEquals($product_two->get_id(), $product_template_mock->get_product_id_by_field('meta', ['_sku' => $product_two->get_sku()]));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('meta', ['_sku' => $product_two->get_name()]));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('meta', ['_sku' => $product_two->get_slug()]));
+
+        $this->assertFalse($product_template_mock->get_product_id_by_field('meta', ['_sku' => '']));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('meta', '_sku'));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('meta', ['_sku' => 0]));
+        $this->assertFalse($product_template_mock->get_product_id_by_field('meta', ['_sku' => 'test-sku']));
     }
 
     public function test_get_product_id_by_sku()
     {
+        $product_template_mock = $this->createPartialMock(ProductTemplate::class, ['get_product_id_by_field']);
+
+        $importer_model_mock = $this->createMock(ImporterModel::class);
+        $importer_model_mock->method('getSetting')->will($this->returnValue(['product', 'product_variation']));
+
+        $this->setProtectedProperty($product_template_mock, 'importer', $importer_model_mock);
+
+        $product_template_mock->expects($this->once())
+            ->method('get_product_id_by_field')
+            ->with('sku', 'example-sku');
+
+        $product_template_mock->get_product_id_by_sku('example-sku');
     }
+
     public function test_get_product_id_by_name()
     {
+        $product_template_mock = $this->createPartialMock(ProductTemplate::class, ['get_product_id_by_field']);
+
+        $importer_model_mock = $this->createMock(ImporterModel::class);
+        $importer_model_mock->method('getSetting')->will($this->returnValue(['product', 'product_variation']));
+
+        $this->setProtectedProperty($product_template_mock, 'importer', $importer_model_mock);
+
+        $product_template_mock->expects($this->once())
+            ->method('get_product_id_by_field')
+            ->with('name', 'Example Name');
+
+        $product_template_mock->get_product_id_by_name('Example Name');
     }
+
     public function test_get_product_id_by_slug()
     {
+        $product_template_mock = $this->createPartialMock(ProductTemplate::class, ['get_product_id_by_field']);
+
+        $importer_model_mock = $this->createMock(ImporterModel::class);
+        $importer_model_mock->method('getSetting')->will($this->returnValue(['product', 'product_variation']));
+
+        $this->setProtectedProperty($product_template_mock, 'importer', $importer_model_mock);
+
+        $product_template_mock->expects($this->once())
+            ->method('get_product_id_by_field')
+            ->with('slug', 'example-slug');
+
+        $product_template_mock->get_product_id_by_slug('example-slug');
     }
 }
