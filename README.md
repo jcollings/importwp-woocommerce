@@ -2,7 +2,7 @@
 
 Requires Import WP: 2.11.6
 
-**Version: 2.3.2**
+**Version: 2.3.3**
 
 ![WooCommerce Product Importer](./assets/iwp-addon-woocommerce.png)
 
@@ -51,6 +51,10 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 ## Screenshots
 
 ## Changelog
+
+### 2.3.3
+
+- FIX - Fix issue with blank screen caused by filtering array values, and then the javascript treating the array as an object.
 
 ### 2.3.2
 
