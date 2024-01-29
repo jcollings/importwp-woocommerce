@@ -7,7 +7,7 @@ use ImportWPAddon\WooCommerce\Exporter\Mapper\ProductMapper;
  */
 add_filter('iwp/exporter/export_field_list', function ($fields) {
 
-    $mapper = new ProductMapper('product,product_variation');
+    $mapper = new ProductMapper(['product', 'product_variation']);
 
     array_unshift($fields, [
         'id' => 'woocommerce_product',

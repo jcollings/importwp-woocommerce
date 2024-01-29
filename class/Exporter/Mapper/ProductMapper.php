@@ -399,7 +399,7 @@ class ProductMapper extends PostMapper
             return !in_array($item, $cf_fields_to_remove);
         });
 
-        return $fields;
+        return array_values($fields);
     }
 
     /**

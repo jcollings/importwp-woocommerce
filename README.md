@@ -52,6 +52,10 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 
 ## Changelog
 
+### 2.3.3
+
+- FIX - Fix issue with blank screen caused by filtering array values, and then the javascript treating the array as an object.
+
 ### 2.3.2
 
 - FIX - Fix updater script to get rid of php warning message.
