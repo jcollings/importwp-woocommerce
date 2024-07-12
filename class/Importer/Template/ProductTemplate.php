@@ -948,6 +948,8 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
                 $existing_options = isset($parent_attributes[$attribute_name]) ? $parent_attributes[$attribute_name]->get_options() : [];
 
+                $all_term_ids = -1;
+
                 if (isset($terms)) {
                     if (!is_array($terms)) {
                         $attribute_delimiter = apply_filters('iwp/woocommerce/attribute/delimiter', ',');
@@ -957,7 +959,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
                     // Convert term names to ids if they exist
                     if (isset($parent_attributes[$attribute_name])) {
-                        $tmp = [];
+                        $term_ids = [];
                         foreach ($terms as $term) {
                             /**
                              * @var \WC_Product_Attribute[] $parent_attributes
@@ -968,21 +970,25 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                                  * @var \WP_Term $existing_term
                                  */
                                 if ($existing_term->slug == sanitize_title($term)) {
-                                    $tmp[] =  $existing_term->term_id;
+                                    // $term_ids[] =  $existing_term->term_id;
+                                    if ($all_term_ids == -1) {
+                                        $all_term_ids = 1;
+                                    }
                                     continue 2;
                                 }
                             }
 
-                            $tmp[] = $term;
+                            $term_ids[] = $term;
+                            $all_term_ids = 0;
                         }
-
-                        $terms = $tmp;
                     }
                 }
 
                 if ($attribute_id) {
-                    if (isset($terms)) {
 
+                    if ($all_term_ids == 1 && !empty($term_ids)) {
+                        $options = $term_ids;
+                    } elseif (isset($terms)) {
                         $options = array_map('wc_sanitize_term_text_based', $terms);
                         $options = array_filter($options, 'strlen');
                     } else {
@@ -991,25 +997,29 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
                     $options = array_unique(array_merge($existing_options, $options));
 
-                    if (!empty($options) && $options != $existing_options) {
+                    if (!empty($options)) {
                         $attribute_object = new \WC_Product_Attribute();
                         $attribute_object->set_id($attribute_id);
                         $attribute_object->set_name($attribute_name);
                         $attribute_object->set_options($options);
                         $attribute_object->set_variation($use_variation !== 'no');
                         $attribute_object->set_visible($visible === 'yes');
-                        $parent_attributes[$attribute_name] = $attribute_object;
-                        $update_parent = true;
+                        if ($options != $existing_options) {
+                            $parent_attributes[$attribute_name] = $attribute_object;
+                            $update_parent = true;
+                        }
                     }
-                } elseif (isset($terms) && $terms != $existing_options) {
+                } elseif (isset($terms)) {
 
                     $attribute_object = new \WC_Product_Attribute();
                     $attribute_object->set_name($name);
                     $attribute_object->set_options($terms);
                     $attribute_object->set_variation($use_variation !== 'no');
                     $attribute_object->set_visible($visible === 'yes');
-                    $parent_attributes[$attribute_name] = $attribute_object;
-                    $update_parent = true;
+                    if ($terms != $existing_options) {
+                        $parent_attributes[$attribute_name] = $attribute_object;
+                        $update_parent = true;
+                    }
                 }
 
                 if ($use_variation !== 'no' && $attribute_object) {
