@@ -954,6 +954,30 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                         $attribute_delimiter = apply_filters('iwp/woocommerce/attribute/' . $attribute_name . '/delimiter', $attribute_delimiter);
                         $terms = explode($attribute_delimiter, $terms);
                     }
+
+                    // Convert term names to ids if they exist
+                    if (isset($parent_attributes[$attribute_name])) {
+                        $tmp = [];
+                        foreach ($terms as $term) {
+                            /**
+                             * @var \WC_Product_Attribute[] $parent_attributes
+                             */
+                            foreach ($parent_attributes[$attribute_name]->get_terms() as $existing_term) {
+
+                                /**
+                                 * @var \WP_Term $existing_term
+                                 */
+                                if ($existing_term->slug == sanitize_title($term)) {
+                                    $tmp[] =  $existing_term->term_id;
+                                    continue 2;
+                                }
+                            }
+
+                            $tmp[] = $term;
+                        }
+
+                        $terms = $tmp;
+                    }
                 }
 
                 if ($attribute_id) {
@@ -967,7 +991,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
                     $options = array_unique(array_merge($existing_options, $options));
 
-                    if (!empty($options)) {
+                    if (!empty($options) && $options != $existing_options) {
                         $attribute_object = new \WC_Product_Attribute();
                         $attribute_object->set_id($attribute_id);
                         $attribute_object->set_name($attribute_name);
@@ -977,7 +1001,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                         $parent_attributes[$attribute_name] = $attribute_object;
                         $update_parent = true;
                     }
-                } elseif (isset($terms)) {
+                } elseif (isset($terms) && $terms != $existing_options) {
 
                     $attribute_object = new \WC_Product_Attribute();
                     $attribute_object->set_name($name);
