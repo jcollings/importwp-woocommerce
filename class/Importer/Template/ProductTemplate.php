@@ -970,7 +970,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                                  * @var \WP_Term $existing_term
                                  */
                                 if ($existing_term->slug == sanitize_title($term)) {
-                                    // $term_ids[] =  $existing_term->term_id;
+                                    $term_ids[] =  $existing_term->term_id;
                                     if ($all_term_ids == -1) {
                                         $all_term_ids = 1;
                                     }
@@ -978,7 +978,6 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                                 }
                             }
 
-                            $term_ids[] = $term;
                             $all_term_ids = 0;
                         }
                     }
