@@ -35,18 +35,25 @@ require dirname(dirname(__FILE__)) . '/tests/autoload.php';
  */
 function _manually_load_plugin()
 {
+	$plugin_dir = __DIR__ . '/../..';
 
-	if (!file_exists(TMP_BASE_DIR . '/woocommerce/woocommerce.php')) {
+	if (file_exists(TMP_BASE_DIR . '/woocommerce/woocommerce.php')) {
+		require TMP_BASE_DIR . '/woocommerce/woocommerce.php';
+	} elseif (file_exists($plugin_dir . '/woocommerce/woocommerce.php')) {
+		require $plugin_dir . '/woocommerce/woocommerce.php';
+	} else {
 		echo "Could not find woocommerce.";
 		exit(1);
 	}
-	require TMP_BASE_DIR . '/woocommerce/woocommerce.php';
 
-	if (!file_exists(TMP_BASE_DIR . '/jc-importer/jc-importer.php')) {
+	if (file_exists(TMP_BASE_DIR . '/jc-importer/jc-importer.php')) {
+		require TMP_BASE_DIR . '/jc-importer/jc-importer.php';
+	} elseif (file_exists($plugin_dir . '/jc-importer/jc-importer.php')) {
+		require $plugin_dir . '/jc-importer/jc-importer.php';
+	} else {
 		echo "Could not find jc-importer.";
 		exit(1);
 	}
-	require TMP_BASE_DIR . '/jc-importer/jc-importer.php';
 
 	require dirname(dirname(__FILE__)) . '/woocommerce.php';
 }
