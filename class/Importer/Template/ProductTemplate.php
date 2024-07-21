@@ -994,15 +994,15 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                         $options = array();
                     }
 
-                    $options = array_unique(array_merge($existing_options, $options));
-
                     if (!empty($options)) {
+
                         $attribute_object = new \WC_Product_Attribute();
                         $attribute_object->set_id($attribute_id);
                         $attribute_object->set_name($attribute_name);
                         $attribute_object->set_options($options);
                         $attribute_object->set_variation($use_variation !== 'no');
                         $attribute_object->set_visible($visible === 'yes');
+                        $options = array_unique(array_merge($existing_options, $options));
                         if ($options != $existing_options) {
                             $parent_attributes[$attribute_name] = $attribute_object;
                             $update_parent = true;
@@ -1015,7 +1015,8 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     $attribute_object->set_options($terms);
                     $attribute_object->set_variation($use_variation !== 'no');
                     $attribute_object->set_visible($visible === 'yes');
-                    if ($terms != $existing_options) {
+                    $options = array_unique(array_merge($existing_options, $terms));
+                    if ($options != $existing_options) {
                         $parent_attributes[$attribute_name] = $attribute_object;
                         $update_parent = true;
                     }
@@ -1030,6 +1031,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     if ($attribute_object->is_taxonomy()) {
                         // If dealing with a taxonomy, we need to get the slug from the name posted to the API.
                         $term = get_term_by('name', $attribute_value, $attribute_name);
+                        $term = apply_filters('iwp/importer/template/post_term', $term, $attribute_name);
 
                         if ($term && !is_wp_error($term)) {
                             $attribute_value = $term->slug;
@@ -1565,6 +1567,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             default:
                 return false;
         }
+
+        // needed for wpml integration
+        $query_args['suppress_filters'] = true;
 
         $query = new \WP_Query($query_args);
 
