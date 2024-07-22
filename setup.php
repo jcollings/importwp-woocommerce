@@ -4,6 +4,15 @@ use ImportWP\Common\Importer\ParsedData;
 use ImportWPAddon\WooCommerce\Importer\Mapper\ProductMapper;
 use ImportWPAddon\WooCommerce\Importer\Template\ProductTemplate;
 
+// Allow working with WPML
+add_filter('iwp/wpml/can_run', function ($is_allowed, $template) {
+
+    if ($template == 'woocommerce-product') {
+        return true;
+    }
+    return $is_allowed;
+}, 10, 2);
+
 // TODO: Try disabling term recount to speed up import: 'woocommerce_product_recount_terms'
 
 add_action('iwp/register_events', function ($event_handler) {
