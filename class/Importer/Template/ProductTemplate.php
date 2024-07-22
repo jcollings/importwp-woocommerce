@@ -1568,9 +1568,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 return false;
         }
 
-        // needed for wpml integration
-        $query_args['suppress_filters'] = true;
-
+        $query_args = apply_filters('iwp/woocommerce/importer/product/get_product_id_args', $query_args);
         $query = new \WP_Query($query_args);
 
         if ($query->have_posts()) {
