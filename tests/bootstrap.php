@@ -35,19 +35,8 @@ require dirname(dirname(__FILE__)) . '/tests/autoload.php';
  */
 function _manually_load_plugin()
 {
-
-	if (!file_exists(TMP_BASE_DIR . '/woocommerce/woocommerce.php')) {
-		echo "Could not find woocommerce.";
-		exit(1);
-	}
-	require TMP_BASE_DIR . '/woocommerce/woocommerce.php';
-
-	if (!file_exists(TMP_BASE_DIR . '/jc-importer/jc-importer.php')) {
-		echo "Could not find jc-importer.";
-		exit(1);
-	}
-	require TMP_BASE_DIR . '/jc-importer/jc-importer.php';
-
+	require dirname(dirname(__FILE__)) . '/../woocommerce/woocommerce.php';
+	require dirname(dirname(__FILE__)) . '/../jc-importer/jc-importer.php';
 	require dirname(dirname(__FILE__)) . '/woocommerce.php';
 }
 
