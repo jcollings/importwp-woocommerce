@@ -36,7 +36,7 @@
             </Combination>
         </Combinations>
     </Product>
-    <Product id="1">
+    <Product id="2">
         <Name>Product 2</Name>
         <Sku>product-two</Sku>
         <Price>£1020</Price>

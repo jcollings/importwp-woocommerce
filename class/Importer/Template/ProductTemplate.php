@@ -9,13 +9,9 @@ use ImportWP\Container;
 use ImportWP\EventHandler;
 
 if (class_exists('ImportWP\Pro\Importer\Template\PostTemplate')) {
-    class IWP_Base_PostTemplate extends \ImportWP\Pro\Importer\Template\PostTemplate
-    {
-    }
+    class IWP_Base_PostTemplate extends \ImportWP\Pro\Importer\Template\PostTemplate {}
 } else {
-    class IWP_Base_PostTemplate extends \ImportWP\Common\Importer\Template\PostTemplate
-    {
-    }
+    class IWP_Base_PostTemplate extends \ImportWP\Common\Importer\Template\PostTemplate {}
 }
 
 class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
@@ -207,6 +203,23 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 )),
             ])
         ]);
+
+        $attributes = apply_filters('iwp/woocommerce/xml_child_variation_attributes', []);
+        if (!empty($attributes)) {
+
+            $attribute_fields = [];
+            foreach ($attributes as $attribute) {
+                $attribute_fields[] = $this->register_field('Attribute ' . $attribute, 'attribute_' . $attribute);
+            }
+
+            $groups[] = $this->register_group('Variations', 'variations', array_merge([
+
+                $this->register_field('Stock', 'stock'),
+                $this->register_field('Price', 'price'),
+                $this->register_field('Sku', 'sku'),
+
+            ], $attribute_fields), ['type' => 'repeatable', 'row_base' => true]);
+        }
 
         $groups[] = $this->register_group('Shipping', 'shipping', [
             $this->register_group('Product Dimensions', 'dimensions', [
@@ -2161,33 +2174,35 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
     public function generate_field_map_remove_wc_custom_fields($custom_fields)
     {
 
-        foreach ([
-            '_virtual',
-            '_downloadable',
-            '_visibility',
-            'product_type',
-            '_regular_price',
-            '_sale_price',
-            '_sale_price_dates_to',
-            '_sale_price_dates_from',
-            '_sku',
-            '_stock_status',
-            '_manage_stock',
-            '_stock',
-            '_backorders',
-            '_low_stock_amount',
-            '_sold_individually',
-            '_weight',
-            '_length',
-            '_width',
-            '_height',
-            '_purchase_note',
-            '_download_limit',
-            '_download_expiry',
-            '_upsell_ids',
-            '_crosssell_ids',
-            '_price',
-        ] as $key) {
+        foreach (
+            [
+                '_virtual',
+                '_downloadable',
+                '_visibility',
+                'product_type',
+                '_regular_price',
+                '_sale_price',
+                '_sale_price_dates_to',
+                '_sale_price_dates_from',
+                '_sku',
+                '_stock_status',
+                '_manage_stock',
+                '_stock',
+                '_backorders',
+                '_low_stock_amount',
+                '_sold_individually',
+                '_weight',
+                '_length',
+                '_width',
+                '_height',
+                '_purchase_note',
+                '_download_limit',
+                '_download_expiry',
+                '_upsell_ids',
+                '_crosssell_ids',
+                '_price',
+            ] as $key
+        ) {
             if (isset($custom_fields[$key])) {
                 unset($custom_fields[$key]);
             }
