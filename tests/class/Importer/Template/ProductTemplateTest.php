@@ -406,4 +406,52 @@ class ProductTemplateTest extends \WP_UnitTestCase
             [false, ''],
         ];
     }
+
+    public function test_no_duplicate_local_product_attribute()
+    {
+        // generate test products
+        $parent = $this->mock_product('simple');
+        $parent->save();
+
+        /**
+         * @var \PHPUnit\Framework\MockObject\MockObject|ParsedData $parsed_data
+         */
+        $parsed_data = $this->createMock(ParsedData::class);
+
+        // not sure how to reset attribute taxonomies, best way to change it for now.
+        // wc_delete_attribute()
+
+        $parsed_data->method('getData')
+            ->with($this->equalTo('attributes'))
+            ->willReturn([
+                'attributes._index' => 1,
+                'attributes.0.name' => 'LocalProductAttribute',
+                'attributes.0.terms' => 'red,red',
+                'attributes.0.global' => 'no',
+                'attributes.0.visible' => 'yes',
+                'attributes.0.variation' => ''
+            ]);
+
+
+        $product_template_mock = $this->createPartialMock(ProductTemplate::class, []);
+
+        $importer_model_mock = $this->createMock(ImporterModel::class);
+        $importer_model_mock->method('isEnabledField')->will($this->returnValue(false));
+
+        $this->setProtectedProperty($product_template_mock, 'importer', $importer_model_mock);
+
+        // $product_template = new ProductTemplate($event_handler);
+        $product_template_mock->set_product_data($parent, $parsed_data);
+        $parent->save();
+
+        /**
+         * @var \WC_Product_Variable $final_parent
+         */
+        $final_parent = wc_get_product($parent->get_id());
+
+        /**
+         * @var \WC_Product_Attribute[] $parent_attributes
+         */
+        $this->assertEquals('red', $final_parent->get_attribute('LocalProductAttribute'));
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace ImportWPAddon\WooCommerce\Importer\Template;
 
+use Exception;
 use ImportWP\Common\Importer\Exception\MapperException;
 use ImportWP\Common\Importer\ParsedData;
 use ImportWP\Common\Importer\TemplateInterface;
@@ -696,63 +697,6 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             // // downloadable
             $this->set_downloads($product, $data, $wc_data);
 
-            // TODO: set variations
-            if ($product->is_type('variable')) {
-                $attributes = apply_filters('iwp/woocommerce/xml_child_variation_attributes', []);
-                if (!empty($attributes)) {
-
-                    /**
-                     * @var \WC_Product_Variable $product
-                     */
-                    $available_variations = $product->get_available_variations();
-
-                    /**
-                     * @var \ImportWP\Common\Importer\ParsedData $data
-                     */
-                    $variations = $data->getData('variations.0');
-                    foreach ($variations as $variation_data) {
-
-                        $sku = $variation_data['variations.0.sku'];
-                        $stock = $variation_data['variations.0.stock'];
-                        $price = $variation_data['variations.0.price'];
-
-                        $formatted_attrs = [];
-                        foreach ($attributes as $attr) {
-
-                            // if starts with pa_ then we get the id
-                            $name = $variation_data['variations.0.attribute_' . $attr];
-                            if (strpos($attr, 'pa_') === 0) {
-                                $name = get_term_by('name', $name, $attr)->slug;
-                            }
-                            $formatted_attrs[$attr] = $name;
-                        }
-
-                        $variation_id = false;
-                        foreach ($available_variations as $existing_variation) {
-                            if (
-                                $existing_variation['sku'] == $sku
-                                || !array_diff_assoc($formatted_attrs, $existing_variation['attributes'])
-                            ) {
-                                $variation_id = $existing_variation['variation_id'];
-                                break;
-                            }
-                        }
-
-                        if (!empty($variation_id)) {
-                            $variation = wc_get_product_object('variation', $variation_id);
-                        } else {
-                            $variation = new \WC_Product_Variation();
-                            $variation->set_attributes($formatted_attrs);
-                        }
-
-                        $variation->set_parent_id($product->get_id());
-                        $variation->set_stock_quantity($stock);
-                        $variation->set_regular_price($price);
-                        $variation->save();
-                    }
-                }
-            }
-
             if ('variation' === $product->get_type()) {
                 $this->set_variation_data($product, $data);
             } else {
@@ -763,8 +707,95 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             $this->process_product_gallery($product, $data);
 
             $product->save();
+
+            // Needs to be after product save, due to fetching data.
+            if ($product->is_type('variable')) {
+                $this->process_inline_variations($product, $data);
+            }
         } catch (\Exception $e) {
             throw new MapperException($e->getMessage());
+        }
+    }
+
+    function process_inline_variations($product, $data)
+    {
+        $attributes = apply_filters('iwp/woocommerce/xml_child_variation_attributes', []);
+        if (empty($attributes)) {
+            return;
+        }
+
+        /**
+         * @var \ImportWP\Common\Importer\ParsedData $data
+         */
+        $variations = $data->getData('variations.0');
+
+        $tmp_variations = [];
+        foreach ($variations as $variation_data) {
+
+            $sku = $variation_data['variations.0.sku'];
+            $stock = $variation_data['variations.0.stock'];
+            $price = $variation_data['variations.0.price'];
+
+            $formatted_attrs = [];
+            foreach ($attributes as $attr) {
+
+                // if starts with pa_ then we get the id
+                $name = $variation_data['variations.0.attribute_' . $attr];
+
+                if (empty($name)) {
+                    continue;
+                }
+
+                if (strpos($attr, 'pa_') === 0) {
+                    $attr_term = get_term_by('name', $name, $attr);
+                    if ($attr_term) {
+                        $name = $attr_term->slug;
+                    }
+                }
+                $formatted_attrs[$attr] = $name;
+            }
+
+            $variation_id = false;
+
+            /**
+             * @var \WC_Product_Variable $product
+             */
+            $available_variations = array_merge(
+                $product->get_available_variations(),
+                $tmp_variations
+            );
+
+            foreach ($available_variations as $existing_variation) {
+                if (
+                    $existing_variation['sku'] == $sku
+                    || !array_diff_assoc($formatted_attrs, $existing_variation['attributes'])
+                ) {
+                    $variation_id = $existing_variation['variation_id'];
+                    break;
+                }
+            }
+
+            if (!empty($variation_id)) {
+                $variation = wc_get_product_object('variation', $variation_id);
+            } else {
+                $variation = new \WC_Product_Variation();
+                $variation->set_attributes($formatted_attrs);
+            }
+
+            $variation->set_parent_id($product->get_id());
+
+            if ("" !== $stock) {
+                $variation->set_manage_stock(true);
+                $variation->set_stock_quantity($stock);
+            }
+            $variation->set_regular_price($price);
+            $variation->save();
+
+            $tmp_variations[] = [
+                'variation_id' => $variation->get_id(),
+                'sku' => $variation->get_sku(),
+                'attributes' => $formatted_attrs
+            ];
         }
     }
 
@@ -1239,6 +1270,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                         continue;
                     }
                 }
+
+                // remove duplicate attributes
+                $terms = array_values(array_unique($terms));
 
                 if ($attribute_id) {
                     if (isset($terms)) {
