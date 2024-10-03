@@ -752,7 +752,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                         $name = $attr_term->slug;
                     }
                 }
-                $formatted_attrs[$attr] = $name;
+                $formatted_attrs['attribute_' . $attr] = $name;
             }
 
             $variation_id = false;
@@ -766,8 +766,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             );
 
             foreach ($available_variations as $existing_variation) {
+
                 if (
-                    $existing_variation['sku'] == $sku
+                    (!empty($sku) && $existing_variation['sku'] == $sku)
                     || !array_diff_assoc($formatted_attrs, $existing_variation['attributes'])
                 ) {
                     $variation_id = $existing_variation['variation_id'];
@@ -782,6 +783,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 $variation->set_attributes($formatted_attrs);
             }
 
+            $variation->set_sku($sku);
             $variation->set_parent_id($product->get_id());
 
             if ("" !== $stock) {
