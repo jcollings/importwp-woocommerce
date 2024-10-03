@@ -7,5 +7,5 @@ wp-env run cli --env-cwd=wp-content/plugins/importwp-woocommerce composer instal
 # Run Tests
 
 ```
-wp-env run cli --env-cwd=wp-content/plugins/importwp-woocommerce vendor/bin/phpunit
+wp-env run tests-cli --env-cwd=wp-content/plugins/importwp-woocommerce vendor/bin/phpunit
 ```
