@@ -52,6 +52,11 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 
 ## Changelog
 
+### 2.3.4
+
+- ADD - Add featured product field to advanced section.
+- FIX - Fix issue where adding a new attribute onto a product would not set used for variations unless updated.
+
 ### 2.3.3
 
 - FIX - Fix issue with blank screen caused by filtering array values, and then the javascript treating the array as an object.
