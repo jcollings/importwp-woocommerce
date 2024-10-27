@@ -1154,6 +1154,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                             }
                         }
                     }
+                } elseif ($use_variation === 'yes' && empty($existing_attributes)) {
+                    // Fixes issue where adding a new attribute onto a product would not set used for variations unless updated.
+                    $is_variation = 1;
                 }
 
                 // convert csv of terms to array
