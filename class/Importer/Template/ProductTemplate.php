@@ -9,13 +9,9 @@ use ImportWP\Container;
 use ImportWP\EventHandler;
 
 if (class_exists('ImportWP\Pro\Importer\Template\PostTemplate')) {
-    class IWP_Base_PostTemplate extends \ImportWP\Pro\Importer\Template\PostTemplate 
-    {
-    }
+    class IWP_Base_PostTemplate extends \ImportWP\Pro\Importer\Template\PostTemplate {}
 } else {
-    class IWP_Base_PostTemplate extends \ImportWP\Common\Importer\Template\PostTemplate 
-    {
-    }
+    class IWP_Base_PostTemplate extends \ImportWP\Common\Importer\Template\PostTemplate {}
 }
 
 class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface

@@ -2,7 +2,7 @@
 
 Requires Import WP: 2.11.6
 
-**Version: 2.3.3**
+**Version: 2.3.4**
 
 ![WooCommerce Product Importer](./assets/iwp-addon-woocommerce.png)
 
@@ -51,6 +51,11 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 ## Screenshots
 
 ## Changelog
+
+### 2.3.4
+
+- ADD - Add featured product field to advanced section.
+- FIX - Fix issue where adding a new attribute onto a product would not set used for variations unless updated.
 
 ### 2.3.3
 
