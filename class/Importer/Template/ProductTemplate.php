@@ -9,13 +9,9 @@ use ImportWP\Container;
 use ImportWP\EventHandler;
 
 if (class_exists('ImportWP\Pro\Importer\Template\PostTemplate')) {
-    class IWP_Base_PostTemplate extends \ImportWP\Pro\Importer\Template\PostTemplate
-    {
-    }
+    class IWP_Base_PostTemplate extends \ImportWP\Pro\Importer\Template\PostTemplate {}
 } else {
-    class IWP_Base_PostTemplate extends \ImportWP\Common\Importer\Template\PostTemplate
-    {
-    }
+    class IWP_Base_PostTemplate extends \ImportWP\Common\Importer\Template\PostTemplate {}
 }
 
 class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
@@ -292,6 +288,10 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     'tooltip' => __('Select the column/node that the parent field is referencing', 'importwp')
                 ])
             ]),
+            $this->register_field('Is Featured', 'featured', [
+                'options' => $yes_no,
+                'default' => 'no'
+            ]),
             $this->register_field('Purchase note', '_purchase_note'),
             $this->register_field('Order', 'menu_order', [
                 'tooltip' => __('The order the post should be displayed in', 'importwp')
@@ -466,6 +466,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             '_purchase_note' => $data->getValue('advanced._purchase_note', 'advanced'),
             '_download_limit' => $data->getValue('advanced._download_limit', 'advanced'),
             '_download_expiry' => $data->getValue('advanced._download_expiry', 'advanced'),
+            'featured' => $data->getValue('advanced.featured', 'advanced'),
             'post_date' => $data->getValue('advanced.post_date', 'advanced'),
 
         ];
@@ -510,6 +511,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             '_purchase_note' => 'advanced._purchase_note',
             '_download_limit' => 'advanced._download_limit',
             '_download_expiry' => 'advanced._download_expiry',
+            'featured' => 'advanced.featured',
             'post_date' => 'advanced.post_date',
         ];
 
@@ -600,6 +602,10 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
             if (isset($wc_data['post_date'])) {
                 $product->set_date_created($wc_data['post_date']);
+            }
+
+            if (isset($wc_data['featured'])) {
+                $product->set_featured(($wc_data['featured'] == 'yes' || $wc_data['featured'] == '1') ? true : false);
             }
 
             // set product values via WC_Product Methods
@@ -1148,9 +1154,6 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                             }
                         }
                     }
-                } elseif ($use_variation === 'yes' && empty($existing_attributes)) {
-                    // Fixes issue where adding a new attribute onto a product would not set used for variations unless updated.
-                    $is_variation = 1;
                 }
 
                 // convert csv of terms to array
@@ -1603,6 +1606,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             '_purchase_note' => 'Purchase note',
             '_download_limit' => 'Download Limit',
             '_download_expiry' => 'Download Expiry',
+            'featured' => 'Is Featured',
         ];
 
         $permission_fields['woocommerce_price'] = [
@@ -2164,33 +2168,35 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
     public function generate_field_map_remove_wc_custom_fields($custom_fields)
     {
 
-        foreach ([
-            '_virtual',
-            '_downloadable',
-            '_visibility',
-            'product_type',
-            '_regular_price',
-            '_sale_price',
-            '_sale_price_dates_to',
-            '_sale_price_dates_from',
-            '_sku',
-            '_stock_status',
-            '_manage_stock',
-            '_stock',
-            '_backorders',
-            '_low_stock_amount',
-            '_sold_individually',
-            '_weight',
-            '_length',
-            '_width',
-            '_height',
-            '_purchase_note',
-            '_download_limit',
-            '_download_expiry',
-            '_upsell_ids',
-            '_crosssell_ids',
-            '_price',
-        ] as $key) {
+        foreach (
+            [
+                '_virtual',
+                '_downloadable',
+                '_visibility',
+                'product_type',
+                '_regular_price',
+                '_sale_price',
+                '_sale_price_dates_to',
+                '_sale_price_dates_from',
+                '_sku',
+                '_stock_status',
+                '_manage_stock',
+                '_stock',
+                '_backorders',
+                '_low_stock_amount',
+                '_sold_individually',
+                '_weight',
+                '_length',
+                '_width',
+                '_height',
+                '_purchase_note',
+                '_download_limit',
+                '_download_expiry',
+                '_upsell_ids',
+                '_crosssell_ids',
+                '_price',
+            ] as $key
+        ) {
             if (isset($custom_fields[$key])) {
                 unset($custom_fields[$key]);
             }
