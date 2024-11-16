@@ -2,7 +2,7 @@
 
 Requires Import WP: 2.11.6
 
-**Version: 2.4.0**
+**Version: 2.5.1**
 
 ![WooCommerce Product Importer](./assets/iwp-addon-woocommerce.png)
 
