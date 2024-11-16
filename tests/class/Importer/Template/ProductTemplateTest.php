@@ -335,4 +335,123 @@ class ProductTemplateTest extends \WP_UnitTestCase
 
         $product_template_mock->get_product_id_by_slug('example-slug');
     }
+
+    /**
+     * @dataProvider provide_test_use_variation_not_set_on_insert
+     */
+    public function test_use_variation_not_set_on_insert($expected, $is_variation)
+    {
+        // generate test products
+        $parent = $this->mock_product('variable');
+        $parent->save();
+
+        /**
+         * @var \PHPUnit\Framework\MockObject\MockObject|ParsedData $parsed_data
+         */
+        $parsed_data = $this->createMock(ParsedData::class);
+
+        // not sure how to reset attribute taxonomies, best way to change it for now.
+        // wc_delete_attribute()
+        $name = 'ColorTest' . $is_variation;
+        $tax = 'pa_colortest' . $is_variation;
+
+        $parsed_data->method('getData')
+            ->with($this->equalTo('attributes'))
+            ->willReturn([
+                'attributes._index' => 1,
+                'attributes.0.name' => $name,
+                'attributes.0.terms' => 'red',
+                'attributes.0.global' => 'yes',
+                'attributes.0.visible' => 'yes',
+                'attributes.0.variation' => $is_variation
+            ]);
+
+        $parsed_data->method('getValue')
+            ->with('post_parent', 'advanced')
+            ->willReturn($parent->get_id());
+
+
+        $product_template_mock = $this->createPartialMock(ProductTemplate::class, []);
+
+        $importer_model_mock = $this->createMock(ImporterModel::class);
+        $importer_model_mock->method('isEnabledField')->will($this->returnValue(false));
+
+        $this->setProtectedProperty($product_template_mock, 'importer', $importer_model_mock);
+
+        // $product_template = new ProductTemplate($event_handler);
+        $product_template_mock->set_product_data($parent, $parsed_data);
+        $parent->save();
+
+        /**
+         * @var \WC_Product_Variable $final_parent
+         */
+        $final_parent = wc_get_product($parent->get_id());
+
+        /**
+         * @var \WC_Product_Attribute[] $parent_attributes
+         */
+        $parent_attributes = $final_parent->get_attributes();
+
+        $this->assertEquals($tax, $parent_attributes[$tax]->get_name());
+        $this->assertGreaterThan(0, $parent_attributes[$tax]->get_options()[0]);
+        $this->assertTrue($parent_attributes[$tax]->is_taxonomy());
+        $this->assertEquals($expected, $parent_attributes[$tax]->get_variation());
+    }
+
+    public function provide_test_use_variation_not_set_on_insert()
+    {
+        return [
+            [true, 'yes'],
+            [false, 'no'],
+            [false, ''],
+        ];
+    }
+
+    public function test_no_duplicate_local_product_attribute()
+    {
+        // generate test products
+        $parent = $this->mock_product('simple');
+        $parent->save();
+
+        /**
+         * @var \PHPUnit\Framework\MockObject\MockObject|ParsedData $parsed_data
+         */
+        $parsed_data = $this->createMock(ParsedData::class);
+
+        // not sure how to reset attribute taxonomies, best way to change it for now.
+        // wc_delete_attribute()
+
+        $parsed_data->method('getData')
+            ->with($this->equalTo('attributes'))
+            ->willReturn([
+                'attributes._index' => 1,
+                'attributes.0.name' => 'LocalProductAttribute',
+                'attributes.0.terms' => 'red,red',
+                'attributes.0.global' => 'no',
+                'attributes.0.visible' => 'yes',
+                'attributes.0.variation' => ''
+            ]);
+
+
+        $product_template_mock = $this->createPartialMock(ProductTemplate::class, []);
+
+        $importer_model_mock = $this->createMock(ImporterModel::class);
+        $importer_model_mock->method('isEnabledField')->will($this->returnValue(false));
+
+        $this->setProtectedProperty($product_template_mock, 'importer', $importer_model_mock);
+
+        // $product_template = new ProductTemplate($event_handler);
+        $product_template_mock->set_product_data($parent, $parsed_data);
+        $parent->save();
+
+        /**
+         * @var \WC_Product_Variable $final_parent
+         */
+        $final_parent = wc_get_product($parent->get_id());
+
+        /**
+         * @var \WC_Product_Attribute[] $parent_attributes
+         */
+        $this->assertEquals('red', $final_parent->get_attribute('LocalProductAttribute'));
+    }
 }

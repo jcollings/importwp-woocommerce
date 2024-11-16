@@ -1,0 +1,13 @@
+{
+    "core": null,
+    "plugins": [
+        "https://downloads.wordpress.org/plugin/jc-importer.zip",
+        "https://downloads.wordpress.org/plugin/woocommerce.zip",
+        "."
+    ],
+    "env": {
+        "tests": {
+            "phpVersion": "8.1"
+        }
+    }
+}
