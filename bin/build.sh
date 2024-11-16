@@ -29,7 +29,7 @@ if [ -d "$FOLDER" ]; then rm -Rf $FOLDER; fi
 git clone --branch $BRANCH git@github.com:jcollings/importwp-woocommerce.git $FOLDER
 cd $FOLDER
 git rm -rf .
-rsync -av .. . --exclude '.git' --exclude '.github' --exclude 'bin' --exclude "$FOLDER" --exclude 'node_modules' --exclude 'src' --exclude 'tests' --exclude 'vendor' --exclude '.babelrc' --exclude '.gitattributes' --exclude '.gitignore' --exclude '.phpcs.xml.dist' --exclude '.phpunit.result.cache' --exclude '.travis.yml' --exclude 'composer.json' --exclude 'composer.lock' --exclude 'package-lock.json' --exclude 'package.json' --exclude 'phpunit.xml.dist' --exclude 'webpack.config.js'
+rsync -av .. . --exclude '.git' --exclude '.wp-env.json' --exclude '.github' --exclude 'bin' --exclude "$FOLDER" --exclude 'node_modules' --exclude 'src' --exclude 'tests' --exclude 'vendor' --exclude '.babelrc' --exclude '.gitattributes' --exclude '.gitignore' --exclude '.phpcs.xml.dist' --exclude '.phpunit.result.cache' --exclude '.travis.yml' --exclude 'composer.json' --exclude 'composer.lock' --exclude 'package-lock.json' --exclude 'package.json' --exclude 'phpunit.xml.dist' --exclude 'webpack.config.js'
 
 # Set version numbers
 sed -i -e "s/__STABLE_TAG__/$TAG/g" README.md
