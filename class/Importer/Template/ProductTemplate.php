@@ -167,6 +167,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             $this->register_core_field('Product SKU', '_sku', [
                 'tooltip' => 'SKU refers to a Stock-keeping unit, a unique identifier for each distinct product and service that can be purchased.'
             ]),
+            $this->register_core_field('GTIN, UPC, EAN, or ISBN', '_global_unique_id', [
+                'tooltip' => 'Enter a barcode or any other identifier unique to this product. It can help you list this product on other channels or marketplaces.'
+            ]),
             $this->register_group('Stock', 'stock', [
                 $this->register_field('Manage Stock?', '_manage_stock', [
                     'options' => $yes_no,
@@ -468,6 +471,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             '_sale_price_dates_from' => $data->getValue('price.sale._sale_price_dates_from', 'price'),
             // inventory
             '_sku' => $data->getValue('inventory._sku', 'inventory'),
+            '_global_unique_id' => $data->getValue('inventory._global_unique_id', 'inventory'),
             '_stock_status' => $data->getValue('inventory.stock._stock_status', 'inventory'),
             '_manage_stock' => $data->getValue('inventory.stock._manage_stock', 'inventory'),
             '_stock' => $data->getValue('inventory.stock._stock', 'inventory'),
@@ -561,6 +565,10 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
              */
             if (isset($wc_data['_sku'])) {
                 $product->set_sku($wc_data['_sku']);
+            }
+            
+            if(isset($wc_data['_global_unique_id']) && method_exists($product, 'set_global_unique_id')){
+                $product->set_global_unique_id($wc_data['_global_unique_id']);
             }
 
             // product types
@@ -1735,6 +1743,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
             // inventory
             '_sku' => 'Product SKU',
+            '_global_unique_id' => 'Global Unique ID',
             '_stock_status' => 'Stock status',
             '_manage_stock' => 'Manage Stock',
             '_stock' => 'Stock quantity',
@@ -2292,6 +2301,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                 '_sale_price_dates_to',
                 '_sale_price_dates_from',
                 '_sku',
+                '_global_unique_id',
                 '_stock_status',
                 '_manage_stock',
                 '_stock',
