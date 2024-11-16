@@ -35,8 +35,18 @@ require dirname(dirname(__FILE__)) . '/tests/autoload.php';
  */
 function _manually_load_plugin()
 {
-	require dirname(dirname(__FILE__)) . '/../woocommerce/woocommerce.php';
-	require dirname(dirname(__FILE__)) . '/../jc-importer/jc-importer.php';
+	if (($path = dirname(dirname(__FILE__)) . '/../woocommerce/woocommerce.php') && file_exists($path)) {
+		require $path;
+	} else {
+		require TMP_BASE_DIR . '/woocommerce/woocommerce.php';
+	}
+
+	if (($path = dirname(dirname(__FILE__)) . '/../jc-importer/jc-importer.php') && file_exists($path)) {
+		require $path;
+	} else {
+		require TMP_BASE_DIR . '/jc-importer/jc-importer.php';
+	}
+
 	require dirname(dirname(__FILE__)) . '/woocommerce.php';
 }
 
