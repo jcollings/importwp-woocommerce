@@ -2,7 +2,6 @@
 
 namespace ImportWPAddon\WooCommerce\Importer\Template;
 
-use Exception;
 use ImportWP\Common\Importer\Exception\MapperException;
 use ImportWP\Common\Importer\ParsedData;
 use ImportWP\Common\Importer\TemplateInterface;
@@ -566,8 +565,8 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             if (isset($wc_data['_sku'])) {
                 $product->set_sku($wc_data['_sku']);
             }
-            
-            if(isset($wc_data['_global_unique_id']) && method_exists($product, 'set_global_unique_id')){
+
+            if (isset($wc_data['_global_unique_id']) && method_exists($product, 'set_global_unique_id')) {
                 $product->set_global_unique_id($wc_data['_global_unique_id']);
             }
 
@@ -972,7 +971,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
      * @param \WC_Product_Variation $variation 
      * @param ParsedData $data 
      * @return void 
-     * @throws Exception 
+     * @throws \Exception 
      */
     public function set_variation_data(&$variation, ParsedData $data)
     {
@@ -1329,7 +1328,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                         $attribute_object->set_variation($is_variation);
                         $attributes[] = $attribute_object;
                     }
-                } elseif (isset($terms)) {
+                } elseif (!empty($terms)) {
                     // Check for default attributes and set "is_variation".
                     // if (isset($attribute['default']) && !empty($attribute['default']) && in_array($attribute['default'], $terms, true)) {
                     //     $default_attributes[sanitize_title($name)] = $attribute['default'];

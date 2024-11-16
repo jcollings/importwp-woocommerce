@@ -2,7 +2,7 @@
 
 Requires Import WP: 2.11.6
 
-**Version: 2.5.1**
+**Version: 2.3.5**
 
 ![WooCommerce Product Importer](./assets/iwp-addon-woocommerce.png)
 
@@ -51,6 +51,11 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 ## Screenshots
 
 ## Changelog
+
+### 2.3.5
+
+- ADD - Add new field for "GTIN, UPC, EAN, or ISBN".
+- FIX - stop empty local attributes being added.
 
 ### 2.3.4
 
