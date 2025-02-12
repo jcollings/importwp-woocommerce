@@ -2,7 +2,7 @@
 
 Requires Import WP: 2.11.6
 
-**Version: 2.3.5**
+**Version: 2.3.6**
 
 ![WooCommerce Product Importer](./assets/iwp-addon-woocommerce.png)
 
@@ -51,6 +51,10 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 ## Screenshots
 
 ## Changelog
+
+### 2.3.6
+
+- FIX - Skip attribute if no attribute name is passed.
 
 ### 2.3.5
 

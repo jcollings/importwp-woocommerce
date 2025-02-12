@@ -1024,6 +1024,11 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
                 $prefix = 'attributes.' . $i . '.';
                 $name = $raw_attributes[$prefix . 'name'];
+
+                if (empty($name)) {
+                    continue;
+                }
+
                 $terms = $raw_attributes[$prefix . 'terms'];
                 $global = $raw_attributes[$prefix . 'global'];
                 $visible = $raw_attributes[$prefix . 'visible'];
@@ -1392,6 +1397,11 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         for ($i = 0; $i < $record_count; $i++) {
             $prefix = 'attributes.' . $i . '.';
             $name = $raw_attributes[$prefix . 'name'];
+
+            if (empty($name)) {
+                continue;
+            }
+
             $terms = $raw_attributes[$prefix . 'terms'];
             $global = $raw_attributes[$prefix . 'global'];
             $visible = $raw_attributes[$prefix . 'visible'];
