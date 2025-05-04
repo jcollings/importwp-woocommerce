@@ -358,6 +358,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         $sku = $data->getValue('inventory._sku', 'inventory');
         $data->add(['_sku' => $sku]);
 
+        $guid = $data->getValue('inventory._global_unique_id', 'inventory');
+        $data->add(['_global_unique_id' => $guid]);
+
         $post_parent_value = $data->getValue('advanced._parent.parent', 'advanced');
 
         if ($this->importer->isEnabledField('post._author')) {
@@ -1104,9 +1107,13 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                 } elseif (isset($terms)) {
 
+                    $options = array_map('wc_sanitize_term_text_based', $terms);
+                    $options = array_filter($options, 'strlen');
+                    $options = array_unique(array_merge($existing_options, $options));
+
                     $attribute_object = new \WC_Product_Attribute();
                     $attribute_object->set_name($name);
-                    $attribute_object->set_options($terms);
+                    $attribute_object->set_options($options);
                     $attribute_object->set_variation($use_variation !== 'no');
                     $attribute_object->set_visible($visible === 'yes');
                     $parent_attributes[$attribute_name] = $attribute_object;
