@@ -52,6 +52,10 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 
 ## Changelog
 
+### 2.3.7
+
+- ADD - Allow GTIN field to be used as a unique identifier using value `_global_unique_id`
+
 ### 2.3.6
 
 - FIX - Skip attribute if no attribute name is passed.
