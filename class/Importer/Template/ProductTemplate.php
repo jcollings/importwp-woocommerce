@@ -358,6 +358,9 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         $sku = $data->getValue('inventory._sku', 'inventory');
         $data->add(['_sku' => $sku]);
 
+        $guid = $data->getValue('inventory._global_unique_id', 'inventory');
+        $data->add(['_global_unique_id' => $guid]);
+
         $post_parent_value = $data->getValue('advanced._parent.parent', 'advanced');
 
         if ($this->importer->isEnabledField('post._author')) {
