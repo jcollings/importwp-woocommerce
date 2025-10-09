@@ -506,8 +506,8 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
             '_visibility' => 'post._visibility',
             '_product_url' => 'post.external',
             '_button_text' => 'post.external',
-            'tax_status' => 'post.tax_status',
-            'tax_class' => 'post.tax_class',
+            'tax_status' => 'post.tax',
+            'tax_class' => 'post.tax',
 
             // price
             '_sale_price' => 'price.sale',
