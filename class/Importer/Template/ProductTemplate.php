@@ -1901,7 +1901,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
             switch ($field) {
 
-                    // product field
+                // product field
                 case 'custom_fields._downloadable':
                 case 'woocommerce.downloadable':
                     $map['post._downloadable'] = sprintf('{%d}', $index);
@@ -1927,7 +1927,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     $enabled[] = 'post._virtual';
                     break;
 
-                    // price
+                // price
                 case 'custom_fields._regular_price':
                 case 'woocommerce.regular_price':
                     $map['price._regular_price'] = sprintf('{%d}', $index);
@@ -1957,7 +1957,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                     break;
 
-                    // inventory
+                // inventory
                 case 'sku':
                 case 'custom_fields._sku':
                     $map['inventory._sku'] = sprintf('{%d}', $index);
@@ -2015,7 +2015,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                     break;
 
-                    // shipping
+                // shipping
                 case 'woocommerce.weight':
                 case 'custom_fields._weight':
                     $map['shipping.dimensions._weight'] = sprintf('{%d}', $index);
@@ -2049,7 +2049,7 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
                     }
                     break;
 
-                    // advanced
+                // advanced
                 case 'custom_fields._purchase_note':
                 case 'woocommerce.purchase_note':
                     $map['advanced._purchase_note'] = sprintf('{%d}', $index);
@@ -2342,5 +2342,28 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         }
 
         return $custom_fields;
+    }
+
+    public function get_unique_identifier_options($importer_model, $unique_fields = [])
+    {
+        $output = parent::get_unique_identifier_options($importer_model, $unique_fields);
+        $mapped_data = $importer_model->getMap();
+
+        return array_merge($output, [
+            // sku
+            '_sku' => [
+                'value' => '_sku',
+                'label' => 'Product SKU',
+                'uid' => true,
+                'active' => isset($mapped_data['inventory._sku']) && !empty(trim($mapped_data['inventory._sku'])),
+            ],
+            // _global_unique_id
+            '_global_unique_id' => [
+                'value' => '_global_unique_id',
+                'label' => 'GTIN, UPC, EAN, or ISBN',
+                'uid' => true,
+                'active' => isset($mapped_data['inventory._global_unique_id']) && !empty(trim($mapped_data['inventory._global_unique_id'])),
+            ],
+        ]);
     }
 }
