@@ -2,7 +2,7 @@
 
 Requires Import WP: 2.11.6
 
-**Version: 2.3.9**
+**Version: 2.3.10**
 
 ![WooCommerce Product Importer](./assets/iwp-addon-woocommerce.png)
 
@@ -51,6 +51,10 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 ## Screenshots
 
 ## Changelog
+
+### 2.3.10
+
+- Fix - Resolve issue when exporting product attributes from taxonomy, now returns multiple instead of single.
 
 ### 2.3.9
 

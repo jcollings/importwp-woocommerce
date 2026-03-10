@@ -89,7 +89,9 @@ class ProductMapper extends PostMapper
                 $data = maybe_unserialize($row);
                 foreach ($data as $attribute_id => $attribute_data) {
                     if ($attribute_data['is_taxonomy'] == 0 && !in_array($attribute_id, $tmp)) {
-                        $tmp[] = $attribute_id;
+                        $tmp[] = sprintf('%s::name', $attribute_id);
+                        $tmp[] = sprintf('%s::visible', $attribute_id);
+                        $tmp[] = sprintf('%s::variation', $attribute_id);
                     }
                 }
             }
@@ -131,7 +133,12 @@ class ProductMapper extends PostMapper
             'label' => 'Product Gallery',
             'loop' => false,
             'fields' => [
-                'id', 'url', 'title', 'alt', 'caption', 'description'
+                'id',
+                'url',
+                'title',
+                'alt',
+                'caption',
+                'description'
             ],
             'children' => []
         ];
@@ -142,7 +149,8 @@ class ProductMapper extends PostMapper
             'label' => 'Downloadable',
             'loop' => false,
             'fields' => [
-                'name', 'file'
+                'name',
+                'file'
             ],
             'children' => []
         ];
@@ -230,7 +238,7 @@ class ProductMapper extends PostMapper
 
                 if ($attribute_data instanceof \WC_Product_Attribute) {
 
-                    $tmp[sprintf('%s::name', $attribute_id)] = '';
+                    $tmp[sprintf('%s::name', $attribute_id)] = [];
                     $tmp[sprintf('%s::visible', $attribute_id)] = $attribute_data->get_visible() ? 'yes' : 'no';
                     $tmp[sprintf('%s::variation', $attribute_id)] = $attribute_data->get_variation() ? 'yes' : 'no';
 
@@ -246,7 +254,7 @@ class ProductMapper extends PostMapper
                                     continue;
                                 }
 
-                                $tmp[sprintf('%s::name', $attribute_id)] = $term->name;
+                                $tmp[sprintf('%s::name', $attribute_id)][] = $term->name;
                             }
                         } else {
                             $tmp[sprintf('%s::name', $attribute_id)] = $term_ids;
