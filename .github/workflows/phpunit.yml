@@ -1,0 +1,92 @@
+name: PHPUnit
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: phpunit-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: PHPUnit (wp-env)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout addon
+        uses: actions/checkout@v4
+        with:
+          path: importwp-woocommerce
+
+      - name: Checkout ImportWP (free)
+        uses: actions/checkout@v4
+        with:
+          repository: importwp/importwp
+          ref: ${{ vars.IMPORTWP_REF || 'master' }}
+          path: importwp
+
+      - name: Checkout ImportWP Pro
+        id: checkout-pro
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: jcollings/importwp-pro
+          ref: ${{ vars.IMPORTWP_PRO_REF || 'master' }}
+          path: importwp-pro
+          token: ${{ secrets.IMPORTWP_PRO_TOKEN || github.token }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install @wordpress/env
+        working-directory: importwp-woocommerce
+        run: npm install @wordpress/env@^11.14.0
+
+      - name: Build wp-env config
+        working-directory: importwp-woocommerce
+        run: |
+          set -euo pipefail
+          cp .wp-env.ci.json .wp-env.test.json
+          if [ -f ../importwp-pro/importwp-pro.php ]; then
+            node -e '
+              const fs = require("fs");
+              const config = JSON.parse(fs.readFileSync(".wp-env.test.json", "utf8"));
+              config.plugins.splice(1, 0, "../importwp-pro");
+              fs.writeFileSync(".wp-env.test.json", JSON.stringify(config, null, "\t") + "\n");
+              console.log("Including importwp-pro in wp-env plugins");
+            '
+          else
+            echo "importwp-pro not available; continuing with free core only"
+            echo "Add repo secret IMPORTWP_PRO_TOKEN (PAT with repo access to jcollings/importwp-pro) to enable Pro in CI."
+          fi
+
+      - name: Start wp-env
+        working-directory: importwp-woocommerce
+        run: npx wp-env start --config=.wp-env.test.json
+
+      - name: Install PHPUnit dependencies
+        working-directory: importwp-woocommerce
+        run: |
+          npx wp-env run --config=.wp-env.test.json cli \
+            --env-cwd=wp-content/plugins/importwp-woocommerce \
+            composer install --prefer-dist --no-interaction
+
+      - name: Run PHPUnit
+        working-directory: importwp-woocommerce
+        run: |
+          npx wp-env run --config=.wp-env.test.json cli \
+            --env-cwd=wp-content/plugins/importwp-woocommerce \
+            ./vendor/bin/phpunit --colors=always
+
+      - name: Stop wp-env
+        if: always()
+        working-directory: importwp-woocommerce
+        run: npx wp-env stop --config=.wp-env.test.json || true

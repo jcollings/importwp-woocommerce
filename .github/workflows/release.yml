@@ -1,0 +1,75 @@
+name: Release
+
+# Tag on master (e.g. v2.3.11) → create GitHub Release + plugin zip (tests excluded).
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build zip and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify tag matches plugin Version header
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME#v}"
+          HEADER="$(grep -E '^\s*\*\s*Version:' woocommerce.php | head -1 | sed -E 's/.*Version:[[:space:]]*//' | tr -d '[:space:]')"
+          if [ -z "${HEADER}" ]; then
+            echo "Could not read Version from woocommerce.php"
+            exit 1
+          fi
+          if [ "${TAG}" != "${HEADER}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} (version ${TAG}) does not match plugin Version header (${HEADER})."
+            echo "Bump Version in woocommerce.php (and README) before tagging."
+            exit 1
+          fi
+          echo "Tag ${GITHUB_REF_NAME} matches plugin Version ${HEADER}"
+
+      - name: Build plugin zip
+        run: |
+          set -euo pipefail
+          PLUGIN_SLUG="importwp-woocommerce"
+          STAGE="$(mktemp -d)/${PLUGIN_SLUG}"
+          mkdir -p "${STAGE}"
+
+          EXCLUDES=()
+          while IFS= read -r line || [ -n "${line}" ]; do
+            # strip CR, skip blanks and comments
+            line="${line%$'\r'}"
+            case "${line}" in
+              ''|\#*) continue ;;
+            esac
+            EXCLUDES+=(--exclude "${line}")
+          done < .distignore
+
+          rsync -a "${EXCLUDES[@]}" ./ "${STAGE}/"
+
+          mkdir -p dist
+          (
+            cd "$(dirname "${STAGE}")"
+            zip -r "${GITHUB_WORKSPACE}/dist/${PLUGIN_SLUG}.zip" "${PLUGIN_SLUG}"
+          )
+
+          echo "Zip contents:"
+          unzip -l "dist/${PLUGIN_SLUG}.zip" | head -80
+          if unzip -l "dist/${PLUGIN_SLUG}.zip" | grep -E '/(tests|vendor|\.github)/'; then
+            echo "ERROR: zip contains excluded paths"
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/importwp-woocommerce.zip
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

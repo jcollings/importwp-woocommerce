@@ -1,0 +1,19 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/wp-env.json",
+	"core": null,
+	"port": 8891,
+	"testsEnvironment": false,
+	"phpmyadmin": false,
+	"phpVersion": "8.2",
+	"plugins": [
+		"../importwp",
+		".",
+		"https://downloads.wordpress.org/plugin/woocommerce.latest-stable.zip"
+	],
+	"config": {
+		"WP_DEBUG": true,
+		"WP_DEBUG_LOG": true,
+		"WP_DEBUG_DISPLAY": false,
+		"DISABLE_WP_CRON": true
+	}
+}

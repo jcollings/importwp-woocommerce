@@ -1,0 +1,23 @@
+# Dev / VCS
+.git/
+.github/
+.gitignore
+.gitattributes
+.distignore
+.DS_Store
+
+# Tests / CI
+tests/
+phpunit.xml.dist
+.phpunit.result.cache
+.wp-env*.json
+
+# Build tooling (not shipped)
+vendor/
+node_modules/
+composer.json
+composer.lock
+package.json
+package-lock.json
+bin/
+dist/

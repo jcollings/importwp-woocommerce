@@ -1,0 +1,5 @@
+vendor/
+node_modules/
+.wp-env.test.json
+.phpunit.result.cache
+.DS_Store

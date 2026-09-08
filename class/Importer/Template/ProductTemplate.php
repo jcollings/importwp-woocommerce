@@ -344,6 +344,31 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
     }
 
     /**
+     * Alter fields before they are parsed.
+     *
+     * Wire advanced Parent Reference Column onto _iwp_ref_post_parent so variations
+     * can resolve parents via get_post_by_cf (same pattern as PostTemplate post._parent).
+     *
+     * @param array $fields
+     * @return array
+     */
+    public function field_map($fields)
+    {
+        $fields = parent::field_map($fields);
+
+        if (
+            $this->importer->isEnabledField('advanced._parent')
+            && isset($fields['advanced._parent._parent_type'])
+            && $fields['advanced._parent._parent_type'] === 'column'
+            && !empty($fields['advanced._parent._parent_ref'])
+        ) {
+            $fields['_iwp_ref_post_parent'] = $fields['advanced._parent._parent_ref'];
+        }
+
+        return $fields;
+    }
+
+    /**
      * Process data before record is importer.
      * 
      * Alter data that is passed to the mapper.
@@ -353,6 +378,12 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
      */
     public function pre_process(ParsedData $data)
     {
+        // Capture before PostTemplate::pre_process replaces the default group.
+        $parent_ref_value = $data->getValue('_iwp_ref_post_parent');
+        if ($parent_ref_value === false) {
+            $parent_ref_value = $data->getValue('advanced._parent._parent_ref', 'advanced');
+        }
+
         $data = parent::pre_process($data);
 
         $sku = $data->getValue('inventory._sku', 'inventory');
@@ -360,6 +391,16 @@ class ProductTemplate extends IWP_Base_PostTemplate implements TemplateInterface
 
         $guid = $data->getValue('inventory._global_unique_id', 'inventory');
         $data->add(['_global_unique_id' => $guid]);
+
+        // Re-add after parent wipe so the mapper stores meta for Reference Column lookups.
+        if (
+            $this->importer->isEnabledField('advanced._parent')
+            && $data->getValue('advanced._parent._parent_type', 'advanced') === 'column'
+            && $parent_ref_value !== false
+            && $parent_ref_value !== ''
+        ) {
+            $data->add(['_iwp_ref_post_parent' => $parent_ref_value]);
+        }
 
         $post_parent_value = $data->getValue('advanced._parent.parent', 'advanced');
 
