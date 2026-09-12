@@ -160,6 +160,95 @@ class OrderTemplate extends IWP_Base_PostTemplate implements TemplateInterface
         return $groups;
     }
 
+    /**
+     * Convert exporter headings into order importer field map.
+     *
+     * @param mixed $fields
+     * @param \ImportWP\Common\Model\ImporterModel $importer
+     * @return array
+     */
+    public function generate_field_map($fields, $importer)
+    {
+        // Do not use PostTemplate mapping — order headings are not post fields.
+        $map = [];
+        $enabled = [];
+        $line_items = [];
+
+        foreach ($fields as $index => $field) {
+            if (preg_match('/^line_items\.(.*?)$/', $field, $matches) === 1) {
+                $line_items[$matches[1]] = sprintf('{%s}', $index);
+                continue;
+            }
+
+            if (preg_match('/^(order|customer|billing|shipping|order_totals)\.(.*?)$/', $field, $matches) === 1) {
+                $group = $matches[1];
+                $field_id = $matches[2];
+                $field_key = $group . '.' . $field_id;
+                $map[$field_key] = sprintf('{%s}', $index);
+
+                if ($group === 'customer') {
+                    if ($field_id === 'email') {
+                        $map['customer._customer.customer'] = sprintf('{%s}', $index);
+                        $map['customer._customer._customer_type'] = 'email';
+                        $enabled[] = 'customer._customer';
+                    } elseif ($field_id === 'id') {
+                        if (!isset($map['customer._customer.customer'])) {
+                            $map['customer._customer.customer'] = sprintf('{%s}', $index);
+                            $map['customer._customer._customer_type'] = 'id';
+                            $enabled[] = 'customer._customer';
+                        }
+                    } elseif ($field_id === 'login') {
+                        if (!isset($map['customer._customer.customer'])) {
+                            $map['customer._customer.customer'] = sprintf('{%s}', $index);
+                            $map['customer._customer._customer_type'] = 'login';
+                            $enabled[] = 'customer._customer';
+                        }
+                    }
+                } elseif ($group === 'order_totals') {
+                    $enabled[] = $field_key;
+                } elseif ($group === 'order' && in_array($field_id, ['ID', 'status', 'currency', 'date_created', 'customer_note', 'payment_method', 'payment_method_title', 'transaction_id'], true)) {
+                    $enabled[] = $field_key;
+                } elseif (in_array($group, ['billing', 'shipping'], true)) {
+                    $enabled[] = $field_key;
+                }
+
+                continue;
+            }
+
+            // Core unique fields exported at the root of the order mapper.
+            if ($field === 'ID') {
+                $map['order.ID'] = sprintf('{%s}', $index);
+                $enabled[] = 'order.ID';
+            } elseif ($field === '_order_key') {
+                $map['order._order_key'] = sprintf('{%s}', $index);
+            }
+        }
+
+        if (!empty($line_items)) {
+            $map['line_items._index'] = 1;
+
+            if (isset($line_items['product'])) {
+                $map['line_items.0.product'] = $line_items['product'];
+                $map['line_items.0._product_type'] = 'sku';
+            } elseif (isset($line_items['product_id'])) {
+                $map['line_items.0.product'] = $line_items['product_id'];
+                $map['line_items.0._product_type'] = 'id';
+            }
+
+            foreach (['quantity', 'total', 'name'] as $line_field) {
+                if (isset($line_items[$line_field])) {
+                    $map['line_items.0.' . $line_field] = $line_items[$line_field];
+                }
+            }
+        }
+
+        return [
+            'map' => $map,
+            // Object map works with older Import WP RestManager; list form does not.
+            'enabled' => array_fill_keys(array_values(array_unique($enabled)), true),
+        ];
+    }
+
     public function register_options()
     {
         // Orders use a fixed post type; skip the default post type selector.

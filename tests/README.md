@@ -44,6 +44,11 @@ Premium third-party plugins (ACF Pro, WPML, etc.) are not installed in CI — ta
 | `Importer/Mapper/CustomerMapperTest.php` | Customer create defaults to customer role |
 | `Importer/Mapper/OrderMapperTest.php` | Order create + exists by order key |
 | `Importer/PostProcessTest.php` | Default `product_cat` cleanup after import |
+| `Exporter/ExporterRegistrationTest.php` | Product/customer/order export types + mapper loading |
+| `Exporter/Mapper/ProductMapperTest.php` | Product export fields + setup |
+| `Exporter/Mapper/CustomerMapperTest.php` | Customer export fields, role query, addresses |
+| `Exporter/Mapper/OrderMapperTest.php` | Order export fields + setup via WC CRUD |
+| `Importer/FromExporter/CreateImporterFromExporterTest.php` | Generate/upload importer map from exporter fields |
 
 Shared helpers live in `Utils/` (`ProductTestTrait`, `CustomerTestTrait`, `OrderTestTrait`, `ProtectedPropertyTrait`).
 

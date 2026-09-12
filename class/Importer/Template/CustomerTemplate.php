@@ -77,6 +77,41 @@ class CustomerTemplate extends IWP_Base_UserTemplate implements TemplateInterfac
         return $groups;
     }
 
+    /**
+     * Convert exporter headings into customer importer field map.
+     *
+     * @param mixed $fields
+     * @param \ImportWP\Common\Model\ImporterModel $importer
+     * @return array
+     */
+    public function generate_field_map($fields, $importer)
+    {
+        $result = parent::generate_field_map($fields, $importer);
+        $map = $result['map'];
+        $enabled = $result['enabled'];
+
+        foreach ($fields as $index => $field) {
+            if (preg_match('/^billing\.(.*?)$/', $field, $matches) === 1) {
+                $field_key = 'billing.' . $matches[1];
+                $map[$field_key] = sprintf('{%s}', $index);
+                $enabled[] = $field_key;
+                continue;
+            }
+
+            if (preg_match('/^shipping\.(.*?)$/', $field, $matches) === 1) {
+                $field_key = 'shipping.' . $matches[1];
+                $map[$field_key] = sprintf('{%s}', $index);
+                $enabled[] = $field_key;
+            }
+        }
+
+        return [
+            'map' => $map,
+            // Object map works with older Import WP RestManager; list form does not.
+            'enabled' => array_fill_keys(array_values(array_unique($enabled)), true),
+        ];
+    }
+
     public function register_settings()
     {
         $settings = parent::register_settings();

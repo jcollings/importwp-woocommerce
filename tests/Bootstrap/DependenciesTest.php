@@ -28,5 +28,8 @@ class DependenciesTest extends \WP_UnitTestCase {
 		$this->assertTrue( class_exists( '\ImportWPAddon\WooCommerce\Importer\Mapper\CustomerMapper' ) );
 		$this->assertTrue( class_exists( '\ImportWPAddon\WooCommerce\Importer\Template\OrderTemplate' ) );
 		$this->assertTrue( class_exists( '\ImportWPAddon\WooCommerce\Importer\Mapper\OrderMapper' ) );
+		$this->assertTrue( class_exists( '\ImportWPAddon\WooCommerce\Exporter\Mapper\ProductMapper' ) );
+		$this->assertTrue( class_exists( '\ImportWPAddon\WooCommerce\Exporter\Mapper\CustomerMapper' ) );
+		$this->assertTrue( class_exists( '\ImportWPAddon\WooCommerce\Exporter\Mapper\OrderMapper' ) );
 	}
 }

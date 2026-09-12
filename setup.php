@@ -96,6 +96,38 @@ function iwp_woocommerce_mapper_unique_fields($unique_fields, $mapper_id)
 add_filter('iwp/mapper/unique_fields', 'iwp_woocommerce_mapper_unique_fields', 10, 2);
 
 /**
+ * Map exporter unique identifier field names onto importer unique field ids.
+ *
+ * Exporter product fields use `sku`; the importer unique field is `_sku`.
+ * Customer/order exporter ids already match importer unique fields.
+ *
+ * @param string $unique_identifier
+ * @param string $exporter_unique_identifier
+ * @param \ImportWP\Common\Model\ImporterModel $importer
+ * @return string
+ */
+function iwp_woocommerce_from_exporter_unique_identifier($unique_identifier, $exporter_unique_identifier, $importer)
+{
+    if (!is_object($importer) || !method_exists($importer, 'getTemplate')) {
+        return $unique_identifier;
+    }
+
+    $aliases = [
+        'woocommerce-product' => [
+            'sku' => '_sku',
+        ],
+    ];
+
+    $template = $importer->getTemplate();
+    if (isset($aliases[$template][$exporter_unique_identifier])) {
+        return $aliases[$template][$exporter_unique_identifier];
+    }
+
+    return $unique_identifier;
+}
+add_filter('iwp/importer/from_exporter/unique_identifier', 'iwp_woocommerce_from_exporter_unique_identifier', 10, 3);
+
+/**
  * Add WooCommerce plugin to compatability whitelist
  * 
  * @param string[] $plugins 
