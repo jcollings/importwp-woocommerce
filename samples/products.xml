@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<products>
+  <product>
+    <name>Simple Product 1</name>
+    <price>10.99</price>
+    <sku>simple-one</sku>
+    <product_type>simple</product_type>
+    <images>https://picsum.photos/id/1/550/500.webp</images>
+    <tag>Simple</tag>
+    <categories>Products &gt; Simple</categories>
+  </product>
+  <product>
+    <name>Simple Product 2</name>
+    <price>12.99</price>
+    <sku>simple-two</sku>
+    <product_type>simple</product_type>
+    <images>https://picsum.photos/id/2/550/500.webp</images>
+    <tag>Simple</tag>
+    <categories>Products &gt; Simple</categories>
+  </product>
+  <product>
+    <name>Variable Product 1</name>
+    <sku>variable-one</sku>
+    <product_type>variable</product_type>
+    <colour>red,blue</colour>
+    <images>https://picsum.photos/id/6/550/500.webp</images>
+    <tag>Variable</tag>
+    <categories>Products &gt; Variable</categories>
+  </product>
+  <product>
+    <name>Product Variation 1</name>
+    <price>10.99</price>
+    <sku>variation-one</sku>
+    <product_type>variation</product_type>
+    <parent>variable-one</parent>
+    <colour>red</colour>
+  </product>
+  <product>
+    <name>Product Variation 2</name>
+    <price>12.99</price>
+    <sku>variation-two</sku>
+    <product_type>variation</product_type>
+    <parent>variable-one</parent>
+    <colour>blue</colour>
+  </product>
+</products>

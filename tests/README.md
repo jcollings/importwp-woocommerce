@@ -37,8 +37,20 @@ Premium third-party plugins (ACF Pro, WPML, etc.) are not installed in CI — ta
 | --- | --- |
 | `Bootstrap/DependenciesTest.php` | Stack smoke (WC, ImportWP, addon classes) |
 | `Importer/TemplateRegistrationTest.php` | Template/mapper registration + filters |
-| `Importer/Template/ProductTemplateTest.php` | Variation/global attributes, product lookup, upsells, field registration (ported from historical suite) |
+| `Importer/Template/ProductTemplateTest.php` | Variation/global attributes, product lookup, upsells, field registration |
+| `Importer/Template/CustomerTemplateTest.php` | Customer field groups + billing/shipping address |
+| `Importer/Template/OrderTemplateTest.php` | Order field groups, addresses, line items, customer link |
 | `Importer/Mapper/ProductMapperTest.php` | Product create by type |
+| `Importer/Mapper/CustomerMapperTest.php` | Customer create defaults to customer role |
+| `Importer/Mapper/OrderMapperTest.php` | Order create + exists by order key |
 | `Importer/PostProcessTest.php` | Default `product_cat` cleanup after import |
 
-Shared helpers live in `Utils/` (`ProductTestTrait`, `ProtectedPropertyTrait`).
+Shared helpers live in `Utils/` (`ProductTestTrait`, `CustomerTestTrait`, `OrderTestTrait`, `ProtectedPropertyTrait`).
+
+## Sample data
+
+| File | Purpose |
+| --- | --- |
+| `samples/products.csv` / `samples/products.xml` | Product examples |
+| `samples/customers.csv` / `samples/customers.xml` | Customer examples |
+| `samples/orders.csv` / `samples/orders.xml` | Order examples (SKU refs match product samples) |

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customers>
+  <customer>
+    <email>alice@example.com</email>
+    <username>alice</username>
+    <first_name>Alice</first_name>
+    <last_name>Smith</last_name>
+    <password>password123</password>
+    <billing>
+      <first_name>Alice</first_name>
+      <last_name>Smith</last_name>
+      <company>Example Co</company>
+      <address_1>10 High Street</address_1>
+      <address_2></address_2>
+      <city>London</city>
+      <postcode>SW1A 1AA</postcode>
+      <country>GB</country>
+      <state>LND</state>
+      <phone>07000000001</phone>
+    </billing>
+    <shipping>
+      <first_name>Alice</first_name>
+      <last_name>Smith</last_name>
+      <address_1>10 High Street</address_1>
+      <city>London</city>
+      <postcode>SW1A 1AA</postcode>
+      <country>GB</country>
+      <state>LND</state>
+    </shipping>
+  </customer>
+  <customer>
+    <email>bob@example.com</email>
+    <username>bob</username>
+    <first_name>Bob</first_name>
+    <last_name>Jones</last_name>
+    <password>password123</password>
+    <billing>
+      <first_name>Bob</first_name>
+      <last_name>Jones</last_name>
+      <company></company>
+      <address_1>22 Queen Street</address_1>
+      <address_2>Flat 2</address_2>
+      <city>Manchester</city>
+      <postcode>M1 1AE</postcode>
+      <country>GB</country>
+      <state>MAN</state>
+      <phone>07000000002</phone>
+    </billing>
+    <shipping>
+      <first_name>Bob</first_name>
+      <last_name>Jones</last_name>
+      <address_1>22 Queen Street</address_1>
+      <city>Manchester</city>
+      <postcode>M1 1AE</postcode>
+      <country>GB</country>
+      <state>MAN</state>
+    </shipping>
+  </customer>
+  <customer>
+    <email>carol@example.com</email>
+    <username>carol</username>
+    <first_name>Carol</first_name>
+    <last_name>Taylor</last_name>
+    <password>password123</password>
+    <billing>
+      <first_name>Carol</first_name>
+      <last_name>Taylor</last_name>
+      <company>Taylor Ltd</company>
+      <address_1>5 Castle Road</address_1>
+      <address_2></address_2>
+      <city>Bristol</city>
+      <postcode>BS1 4DJ</postcode>
+      <country>GB</country>
+      <state>BST</state>
+      <phone>07000000003</phone>
+    </billing>
+    <shipping>
+      <first_name>Carol</first_name>
+      <last_name>Taylor</last_name>
+      <address_1>5 Castle Road</address_1>
+      <city>Bristol</city>
+      <postcode>BS1 4DJ</postcode>
+      <country>GB</country>
+      <state>BST</state>
+    </shipping>
+  </customer>
+</customers>

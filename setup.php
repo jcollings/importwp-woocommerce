@@ -1,7 +1,11 @@
 <?php
 
 use ImportWP\Common\Importer\ParsedData;
+use ImportWPAddon\WooCommerce\Importer\Mapper\CustomerMapper;
+use ImportWPAddon\WooCommerce\Importer\Mapper\OrderMapper;
 use ImportWPAddon\WooCommerce\Importer\Mapper\ProductMapper;
+use ImportWPAddon\WooCommerce\Importer\Template\CustomerTemplate;
+use ImportWPAddon\WooCommerce\Importer\Template\OrderTemplate;
 use ImportWPAddon\WooCommerce\Importer\Template\ProductTemplate;
 
 // TODO: Try disabling term recount to speed up import: 'woocommerce_product_recount_terms'
@@ -14,14 +18,20 @@ add_action('iwp/register_events', function ($event_handler) {
 
 /**
  * Remove default woocommerce category on insert when other categories have been added.
+ * Apply WooCommerce customer billing/shipping addresses after user import.
  *
  * @param int $post_id
  * @param ParsedData $data
- * @param ProductTemplate $template
+ * @param mixed $template
  * @return void
  */
 function iwp_woocommerce_register_template_post_process($post_id, $data, $template)
 {
+    if ($template instanceof CustomerTemplate) {
+        $template->apply_customer_addresses($post_id, $data);
+        return $post_id;
+    }
+
     if (!($template instanceof ProductTemplate)) {
         return;
     }
@@ -54,12 +64,16 @@ function iwp_woocommerce_register_template_post_process($post_id, $data, $templa
 function iwp_woocommerce_register_templates($templates)
 {
     $templates['woocommerce-product'] = ProductTemplate::class;
+    $templates['woocommerce-customer'] = CustomerTemplate::class;
+    $templates['woocommerce-order'] = OrderTemplate::class;
     return $templates;
 }
 
 function iwp_woocommerce_register_mappers($mappers)
 {
     $mappers['woocommerce-product'] = ProductMapper::class;
+    $mappers['woocommerce-customer'] = CustomerMapper::class;
+    $mappers['woocommerce-order'] = OrderMapper::class;
     return $mappers;
 }
 
@@ -67,6 +81,14 @@ function iwp_woocommerce_mapper_unique_fields($unique_fields, $mapper_id)
 {
     if ($mapper_id == 'woocommerce-product') {
         return ['ID', '_sku', 'post_name'];
+    }
+
+    if ($mapper_id == 'woocommerce-customer') {
+        return ['ID', 'user_email', 'user_login'];
+    }
+
+    if ($mapper_id == 'woocommerce-order') {
+        return ['ID', '_order_key'];
     }
 
     return $unique_fields;
