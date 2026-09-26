@@ -62,7 +62,9 @@ The WooCommerce Product Importer Addon can currently only be installed by downlo
 
 ## Changelog
 
-
+### 2.3.12
+ 
+- ADD - Allow importing orders and customers
 
 ### 2.3.11
 
